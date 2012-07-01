@@ -33,6 +33,13 @@ class Fftw < Formula
     system "./configure", "--enable-sse2", *args
     system "make install"
 
+    # clean up so we can compile the AVX variant
+    system "make clean"
+
+    # Use AVX extensions
+    system "./configure", "--enable-avx", *args
+    system "make install"
+
     # clean up so we can compile the long-double precision variant
     system "make clean"
 
