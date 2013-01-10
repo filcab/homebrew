@@ -12,5 +12,6 @@ class Ninja < Formula
     system python, "./bootstrap.py"
     bin.install "ninja"
     bash_completion.install 'misc/bash-completion' => 'ninja-completion.sh'
+    zsh_completion.install 'misc/zsh-completion' => {'_zsh' => '_ninja'}
   end
 end
