@@ -4,16 +4,19 @@ def needs_universal_python?
   build.universal? and not build.include? "without-python"
 end
 
+def boost_layout
+  (build.include? "use-system-layout") ? "system" : "tagged"
+end
+
 class UniversalPython < Requirement
+  satisfy { archs_for_command("python").universal? }
+
   def message; <<-EOS.undent
     A universal build was requested, but Python is not a universal build
 
     Boost compiles against the Python it finds in the path; if this Python
     is not a universal build then linking will likely fail.
     EOS
-  end
-  def satisfied?
-    archs_for_command("python").universal?
   end
 end
 
@@ -25,9 +28,10 @@ class Boost < Formula
   head 'http://svn.boost.org/svn/boost/trunk'
 
   bottle do
-    sha1 'a4e733fe67c15b7bfe500b0855d84616152f7042' => :mountainlion
-    sha1 'dd94aac5f03fb553c1c0e393fbd346748b0bc524' => :lion
-    sha1 '5fae01afa7e5c6e2d29ec32a24324fdaa14cf594' => :snowleopard
+    version 1
+    sha1 'b39540ad7b7ab4ae48ac1265260adb28dde2b9c6' => :mountain_lion
+    sha1 '7444827406c29b69b5cb1a2479a9d2f0add1a755' => :lion
+    sha1 '880dbd7127340bda5ee724f81f78709334704fa4' => :snowleopard
   end
 
   env :userpaths
@@ -37,8 +41,9 @@ class Boost < Formula
   option 'without-python', 'Build without Python'
   option 'with-icu', 'Build regexp engine with icu support'
   option 'with-c++11', 'Compile using Clang, std=c++11 and stdlib=libc++' if MacOS.version >= :lion
+  option 'use-system-layout', 'Use system layout instead of tagged'
 
-  depends_on UniversalPython.new if needs_universal_python?
+  depends_on UniversalPython if needs_universal_python?
   depends_on "icu4c" if build.include? "with-icu"
   depends_on MPIDependency.new(:cc, :cxx) if build.include? "with-mpi"
 
@@ -47,13 +52,26 @@ class Boost < Formula
     cause "Dropped arguments to functions when linking with boost"
   end
 
-  # Patch boost/config/stdlib/libcpp.hpp to fix the constexpr bug reported under Boost 1.52 in Ticket
-  # 7671.  This patch can be removed when upstream release an updated version including the fix.
-  def patches
-    if MacOS.version >= :lion and build.include? 'with-c++11'
-      {:p0 => "https://svn.boost.org/trac/boost/raw-attachment/ticket/7671/libcpp_c11_numeric_limits.patch"}
-    end
+  def pour_bottle?
+    false
   end
+
+  def patches
+    {
+      :p2 => [
+        # Patch boost/config/stdlib/libcpp.hpp to fix the constexpr
+        # bug reported under Boost 1.52 in Ticket 7671.  This patch
+        # can be removed when upstream release an updated version
+        # including the fix.
+        "https://svn.boost.org/trac/boost/changeset/82391?format=diff&new=82391",
+
+        # Security fix for Boost.Locale. For details:
+        # http://www.boost.org/users/news/boost_locale_security_notice.html
+        # Drop when 1.53.0+ releases.
+        "https://svn.boost.org/trac/boost/changeset/81590?format=diff&new=81590"
+      ]
+    }
+  end unless build.head?
 
   def install
     # Adjust the name the libs are installed under to include the path to the
@@ -96,7 +114,7 @@ class Boost < Formula
             "--libdir=#{lib}",
             "-d2",
             "-j#{ENV.make_jobs}",
-            "--layout=tagged",
+            "--layout=#{boost_layout}",
             "--user-config=user-config.jam",
             "threading=multi",
             "install"]
@@ -104,9 +122,12 @@ class Boost < Formula
     if MacOS.version >= :lion and build.include? 'with-c++11'
       args << "toolset=clang" << "cxxflags=-std=c++11"
       args << "cxxflags=-stdlib=libc++" << "cxxflags=-fPIC"
+      args << "cxxflags=-arch x86_64" if MacOS.prefer_64_bit? or build.universal?
+      args << "cxxflags=-arch i386" if !MacOS.prefer_64_bit? or build.universal?
       args << "linkflags=-stdlib=libc++"
       args << "linkflags=-headerpad_max_install_names"
-      args << "linkflags=-arch x86_64"
+      args << "linkflags=-arch x86_64" if MacOS.prefer_64_bit? or build.universal?
+      args << "linkflags=-arch i386" if !MacOS.prefer_64_bit? or build.universal?
     end
 
     args << "address-model=32_64" << "architecture=x86" << "pch=off" if build.universal?
