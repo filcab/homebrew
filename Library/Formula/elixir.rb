@@ -2,6 +2,7 @@ require 'formula'
 
 class ErlangInstalled < Requirement
   fatal true
+  default_formula 'erlang'
 
   satisfy { which 'erl' }
 
@@ -19,8 +20,8 @@ end
 
 class Elixir < Formula
   homepage 'http://elixir-lang.org/'
-  url  'https://github.com/elixir-lang/elixir/tarball/v0.8.0'
-  sha1 'c548335f5d072ae4da52520d95b5be22941de330'
+  url  'https://github.com/elixir-lang/elixir/archive/v0.8.2.tar.gz'
+  sha1 'c58ad161df6615be3e146aaf0dbb5cdf8003c601'
 
   head 'https://github.com/elixir-lang/elixir.git'
 
@@ -38,7 +39,7 @@ class Elixir < Formula
     end
   end
 
-  def test
-    system "#{bin}/elixir -v"
+  test do
+    system "#{bin}/elixir", "-v"
   end
 end

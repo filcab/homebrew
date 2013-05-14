@@ -2,16 +2,16 @@ require 'formula'
 
 class ScmManagerCliClient < Formula
   homepage 'http://www.scm-manager.org'
-  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/clients/scm-cli-client/1.27/scm-cli-client-1.27-jar-with-dependencies.jar'
-  version '1.27'
-  sha1 '5e9b78863368b04bd343c1bd582d133d78e66f25'
+  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/clients/scm-cli-client/1.30/scm-cli-client-1.30-jar-with-dependencies.jar'
+  version '1.30'
+  sha1 'bf18cec676c1594c66677dd43d38de3f780b7e48'
 end
 
 class ScmManager < Formula
   homepage 'http://www.scm-manager.org'
-  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/scm-server/1.27/scm-server-1.27-app.tar.gz'
-  version '1.27'
-  sha1 'b2ef7302fa251b8da936c7085c590fd0978fe0dd'
+  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/scm-server/1.30/scm-server-1.30-app.tar.gz'
+  version '1.30'
+  sha1 'bca9691f7c25b310807786de49b914a00b0eb1db'
 
   skip_clean 'libexec/var/log'
 
@@ -24,6 +24,7 @@ class ScmManager < Formula
       #!/bin/bash
       BASEDIR="#{libexec}"
       REPO="#{libexec}/lib"
+      export JAVA_HOME=$(/usr/libexec/java_home -v 1.6)
       "#{libexec}/bin/scm-server" "$@"
     EOS
     chmod 0755, bin/'scm-server'

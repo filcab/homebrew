@@ -43,19 +43,28 @@ class LinkTests < Test::Unit::TestCase
   def test_linking_fails_when_already_linked
     @keg.link
     assert_raise RuntimeError, "Cannot link testball" do
-      @keg.link
+      shutup { @keg.link }
     end
   end
 
   def test_linking_fails_when_files_exist
     FileUtils.touch HOMEBREW_PREFIX/"bin/helloworld"
     assert_raise RuntimeError do
-      @keg.link
+      shutup { @keg.link }
     end
   end
 
   def test_link_overwrite
     FileUtils.touch HOMEBREW_PREFIX/"bin/helloworld"
+    mode = OpenStruct.new
+    mode.overwrite = true
+    assert_equal 3, @keg.link(mode)
+  end
+
+  def test_link_overwrite_broken_symlinks
+    FileUtils.cd HOMEBREW_PREFIX/"bin" do
+      FileUtils.ln_s "nowhere", "helloworld"
+    end
     mode = OpenStruct.new
     mode.overwrite = true
     assert_equal 3, @keg.link(mode)

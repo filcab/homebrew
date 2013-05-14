@@ -1,13 +1,5 @@
 require 'formula'
 
-def needs_universal_python?
-  build.universal? and not build.include? "without-python"
-end
-
-def boost_layout
-  (build.include? "use-system-layout") ? "system" : "tagged"
-end
-
 class UniversalPython < Requirement
   satisfy { archs_for_command("python").universal? }
 
@@ -22,16 +14,15 @@ end
 
 class Boost < Formula
   homepage 'http://www.boost.org'
-  url 'http://downloads.sourceforge.net/project/boost/boost/1.52.0/boost_1_52_0.tar.bz2'
-  sha1 'cddd6b4526a09152ddc5db856463eaa1dc29c5d9'
+  url 'http://downloads.sourceforge.net/project/boost/boost/1.53.0/boost_1_53_0.tar.bz2'
+  sha1 'e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3'
 
   head 'http://svn.boost.org/svn/boost/trunk'
 
   bottle do
-    version 1
-    sha1 'b39540ad7b7ab4ae48ac1265260adb28dde2b9c6' => :mountain_lion
-    sha1 '7444827406c29b69b5cb1a2479a9d2f0add1a755' => :lion
-    sha1 '880dbd7127340bda5ee724f81f78709334704fa4' => :snowleopard
+    sha1 'fda423e53ed998d54c33cc91582c0d5e3e4ff91e' => :mountain_lion
+    sha1 '99fec23d1b79a510d8cd1f1f0cbd77cc73b4f4b5' => :lion
+    sha1 '15f74640979b95bd327be3b6ca2a5d18878a29ad' => :snow_leopard
   end
 
   env :userpaths
@@ -43,7 +34,7 @@ class Boost < Formula
   option 'with-c++11', 'Compile using Clang, std=c++11 and stdlib=libc++' if MacOS.version >= :lion
   option 'use-system-layout', 'Use system layout instead of tagged'
 
-  depends_on UniversalPython if needs_universal_python?
+  depends_on UniversalPython if build.universal? and not build.include? "without-python"
   depends_on "icu4c" if build.include? "with-icu"
   depends_on MPIDependency.new(:cc, :cxx) if build.include? "with-mpi"
 
@@ -51,27 +42,6 @@ class Boost < Formula
     build 2335
     cause "Dropped arguments to functions when linking with boost"
   end
-
-  def pour_bottle?
-    false
-  end
-
-  def patches
-    {
-      :p2 => [
-        # Patch boost/config/stdlib/libcpp.hpp to fix the constexpr
-        # bug reported under Boost 1.52 in Ticket 7671.  This patch
-        # can be removed when upstream release an updated version
-        # including the fix.
-        "https://svn.boost.org/trac/boost/changeset/82391?format=diff&new=82391",
-
-        # Security fix for Boost.Locale. For details:
-        # http://www.boost.org/users/news/boost_locale_security_notice.html
-        # Drop when 1.53.0+ releases.
-        "https://svn.boost.org/trac/boost/changeset/81590?format=diff&new=81590"
-      ]
-    }
-  end unless build.head?
 
   def install
     # Adjust the name the libs are installed under to include the path to the
@@ -92,6 +62,10 @@ class Boost < Formula
     #   /usr/local/lib/libboost_system-mt.dylib (compatibility version 0.0.0, current version 0.0.0)
     inreplace 'tools/build/v2/tools/darwin.jam', '-install_name "', "-install_name \"#{HOMEBREW_PREFIX}/lib/"
 
+    # boost will try to use cc, even if we'd rather it use, say, gcc-4.2
+    inreplace 'tools/build/v2/engine/build.sh', 'BOOST_JAM_CC=cc', "BOOST_JAM_CC=#{ENV.cc}"
+    inreplace 'tools/build/v2/engine/build.jam', 'toolset darwin cc', "toolset darwin #{ENV.cc}"
+
     # Force boost to compile using the appropriate GCC version
     open("user-config.jam", "a") do |file|
       file.write "using darwin : : #{ENV.cxx} ;\n"
@@ -110,6 +84,12 @@ class Boost < Formula
       bargs << '--without-icu'
     end
 
+    # The context library is implemented as x86_64 ASM, so it
+    # won't build on PPC or 32-bit builds
+    # see https://github.com/mxcl/homebrew/issues/17646
+    bargs << "--without-libraries=context" if Hardware::CPU.type == :ppc || Hardware::CPU.bits == 32 || build.universal?
+
+    boost_layout = (build.include? "use-system-layout") ? "system" : "tagged"
     args = ["--prefix=#{prefix}",
             "--libdir=#{lib}",
             "-d2",

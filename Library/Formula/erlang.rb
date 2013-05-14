@@ -23,8 +23,8 @@ end
 class Erlang < Formula
   homepage 'http://www.erlang.org'
   # Download tarball from GitHub; it is served faster than the official tarball.
-  url 'https://github.com/erlang/otp/tarball/OTP_R15B03-1'
-  sha1 '5ba866722de79956b06966c232490d32bb7ba0a6'
+  url 'https://github.com/erlang/otp/archive/OTP_R15B03-1.tar.gz'
+  sha1 '7843070f5d325f95ef13022fc416b22b6b14120d'
 
   head 'https://github.com/erlang/otp.git', :branch => 'dev'
 
@@ -67,7 +67,7 @@ class Erlang < Formula
             "--enable-shared-zlib",
             "--enable-smp-support"]
 
-    args << "--with-dynamic-trace=dtrace" unless MacOS.version == :leopard
+    args << "--with-dynamic-trace=dtrace" unless MacOS.version == :leopard or not MacOS::CLT.installed?
 
     unless build.include? 'disable-hipe'
       # HIPE doesn't strike me as that reliable on OS X
@@ -84,11 +84,16 @@ class Erlang < Formula
     system "./configure", *args
     touch 'lib/wx/SKIP' if MacOS.version >= :snow_leopard
     system "make"
+    ENV.j1 # Install is not thread-safe; can try to create folder twice and fail
     system "make install"
 
     unless build.include? 'no-docs'
       manuals = build.head? ? ErlangHeadManuals : ErlangManuals
-      manuals.new.brew { man.install Dir['man/*'] }
+      manuals.new.brew {
+        man.install Dir['man/*']
+        # erl -man expects man pages in lib/erlang/man
+        (lib+'erlang').install_symlink man
+      }
 
       htmls = build.head? ? ErlangHeadHtmls : ErlangHtmls
       htmls.new.brew { doc.install Dir['*'] }
