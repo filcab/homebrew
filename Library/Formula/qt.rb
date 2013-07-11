@@ -25,12 +25,12 @@ class Qt < Formula
 
   depends_on "d-bus" if build.with? 'qtdbus'
   depends_on "mysql" => :optional
-  depends_on 'sqlite' if MacOS.version == :leopard
+  depends_on 'sqlite' if MacOS.version <= :leopard
 
   def patches
     # Fixes compilation failure on Leopard.
     # https://bugreports.qt-project.org/browse/QTBUG-23258
-    if MacOS.version == :leopard
+    if MacOS.version <= :leopard
       "http://bugreports.qt-project.org/secure/attachment/26712/Patch-Qt-4.8-for-10.5"
     end
   end
@@ -64,7 +64,7 @@ class Qt < Formula
     args << "-platform" << "unsupported/macx-clang" if ENV.compiler == :clang
 
     # See: https://github.com/mxcl/homebrew/issues/issue/744
-    args << "-system-sqlite" if MacOS.version == :leopard
+    args << "-system-sqlite" if MacOS.version <= :leopard
 
     args << "-plugin-sql-mysql" if build.with? 'mysql'
 
@@ -116,12 +116,11 @@ class Qt < Formula
     (bin+'pixeltool.app').rmtree
     (bin+'qhelpconverter.app').rmtree
     # remove porting file for non-humans
-    (prefix+'q3porting.xml').unlink
+    (prefix+'q3porting.xml').unlink if build.without? 'qt3support'
 
     # Some config scripts will only find Qt in a "Frameworks" folder
-    cd prefix do
-      ln_s lib, frameworks
-    end
+    frameworks.mkpath
+    ln_s Dir['lib/*.framework'], frameworks
 
     # The pkg-config files installed suggest that headers can be found in the
     # `include` directory. Make this so by creating symlinks from `include` to
