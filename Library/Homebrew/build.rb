@@ -34,6 +34,7 @@ def main
 
   require 'hardware'
   require 'keg'
+  require 'extend/ENV'
 
   # Force any future invocations of sudo to require the user's password to be
   # re-entered. This is in-case any build script call sudo. Certainly this is
@@ -94,10 +95,10 @@ class Build
 
   def expand_deps
     f.recursive_dependencies do |dependent, dep|
-      if dep.optional? || dep.recommended?
-        Dependency.prune unless dependent.build.with?(dep.name)
-      elsif dep.build?
-        Dependency.prune unless dependent == f
+      if (dep.optional? || dep.recommended?) && dependent.build.without?(dep.name)
+        Dependency.prune
+      elsif dep.build? && dependent != f
+        Dependency.prune
       end
     end
   end
@@ -106,7 +107,8 @@ class Build
     keg_only_deps = deps.map(&:to_formula).select(&:keg_only?)
 
     pre_superenv_hacks
-    require 'superenv'
+
+    ENV.activate_extensions!
 
     deps.map(&:to_formula).each do |dep|
       opt = HOMEBREW_PREFIX/:opt/dep

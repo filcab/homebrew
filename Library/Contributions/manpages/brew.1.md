@@ -63,11 +63,13 @@ Note that these flags should only appear after a command.
     versions of formula. Note downloads for any installed formula will still not be
     deleted. If you want to delete those too: `rm -rf $(brew --cache)`
 
-  * `create [--autotools|--cmake] [--no-fetch] [--set-name <name>] [--set-version <version>]` <URL>:
+  * `create <URL> [--autotools|--cmake] [--no-fetch] [--set-name <name>] [--set-version <version>]`:
     Generate a formula for the downloadable file at <URL> and open it in the editor.
     Homebrew will attempt to automatically derive the formula name
     and version, but if it fails, you'll have to make your own template. The wget
-    formula serves as a simple example.
+    formula serves as a simple example. For a complete cheat-sheet, have a look at
+
+    `$(brew --prefix)/Library/Contributions/example-formula.rb`
 
     If `--autotools` is passed, create a basic template for an Autotools-style build.
     If `--cmake` is passed, create a basic template for a CMake-style build.
@@ -111,7 +113,7 @@ Note that these flags should only appear after a command.
   * `edit` <formula>:
     Open <formula> in the editor.
 
-  * `fetch [--force] [-v] [--HEAD] [--deps]` <formulae>:
+  * `fetch [--force] [-v] [--HEAD] [--deps] [--build-from-source]` <formulae>:
     Download the source packages for the given <formulae>.
     For tarballs, also print SHA1 and SHA-256 checksums.
 
@@ -122,6 +124,9 @@ Note that these flags should only appear after a command.
     If `--force` is passed, remove a previously cached version and re-fetch.
 
     If `--deps` is passed, also download dependencies for any listed <formulae>.
+
+    If `--build-from-source` is passed, download the source rather than a
+    bottle.
 
   * `home`:
     Open Homebrew's own homepage in a browser.
@@ -266,8 +271,8 @@ Note that these flags should only appear after a command.
     surrounded with slashes, then it is interpreted as a regular expression.
     If no search term is given, all available formula are displayed.
 
-  * `search --macports`|`--fink`|`--debian` <text>:
-    Search for <text> in MacPorts, Fink or Debian's package list.
+  * `search --debian`|`--fedora`|`--fink`|`--macports`|`--opensuse`|`--ubuntu` <text>:
+    Search for <text> in the given package manager's list.
 
   * `sh [--env=std]`:
     Instantiate a Homebrew build environment. Uses our years-battle-hardened
@@ -295,8 +300,9 @@ Note that these flags should only appear after a command.
     Example: `brew install jruby && brew test jruby`
 
   * `unlink` <formula>:
-    Unsymlink <formula> from the Homebrew prefix. This can be useful for
-    temporarily disabling a formula: `brew unlink foo && commands && brew link foo`.
+    Remove symlinks for <formula> from the Homebrew prefix. This can be useful
+    for temporarily disabling a formula:
+    `brew unlink foo && commands && brew link foo`.
 
   * `unpin` <formulae>:
     Unpin <formulae>, allowing them to be upgraded by `brew upgrade`. See also

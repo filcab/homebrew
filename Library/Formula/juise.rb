@@ -2,8 +2,8 @@ require 'formula'
 
 class Juise < Formula
   homepage 'https://github.com/Juniper/juise/wiki'
-  url 'https://github.com/Juniper/juise/releases/0.5.3/3012/juise-0.5.3.tar.gz'
-  sha1 'aacc8414f0ce278bc080ce3b41225a94e3000173'
+  url 'https://github.com/Juniper/juise/releases/download/0.5.7/juise-0.5.7.tar.gz'
+  sha1 'b12ded68f813d128c812d7e4f381a00d21ed3291'
 
   head 'https://github.com/Juniper/juise.git'
 

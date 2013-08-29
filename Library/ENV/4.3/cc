@@ -55,7 +55,8 @@ class Cmd
   def tool
     @tool ||= case @arg0
     when 'ld' then 'ld'
-    when 'cc', 'c99', 'c89', 'cpp'
+    when 'cpp' then 'cpp'
+    when 'cc', 'c99', 'c89'
       # Ideally we would run `cx9`, however these tools are POSIX compliant
       # and don't support many flags. We need -isystem for instance, but also
       # reliability is generally much higher if we just get clang/gcc to do
@@ -112,7 +113,7 @@ class Cmd
         # If ENV.m32 was set, we allow the "-m32" flag, but we don't add anything
         args << '-m32' if cccfg? '3'
       when /^-g\d?/, /^-gstabs\d+/, '-gstabs+', /^-ggdb\d?/, '-gdwarf-2',
-           /^-march=.+/, /^-mtune=.+/, '-m64',
+           /^-march=.+/, /^-mtune=.+/, /^-mcpu=.+/, '-m64',
            /^-O[0-9zs]?$/, '-fast',
            '-pedantic', '-pedantic-errors'
       when '-fopenmp', '-lgomp'
@@ -156,15 +157,22 @@ class Cmd
     args = %w{-pipe -w -Os}
 
     # When bottling use the oldest supported CPU type.
-    if cccfg? 'bi6'
+    if cccfg? 'bc'
+      # Custom bottle specified during the build
+      args << ENV['HOMEBREW_ARCHFLAGS']
+    elsif cccfg? 'bi6'
       args << '-march=core2'
     elsif cccfg? 'bi'
       args << '-march=prescott'
+    elsif cccfg? 'bpA'
+      args << '-mcpu=7400'
+    elsif cccfg? 'bp'
+      args << '-mcpu=750'
     else
       args << '-march=native' if tool =~ /clang/
     end
 
-    args += %w{-arch i386 -arch x86_64} if cccfg? 'u'
+    ENV['HOMEBREW_ARCHS'].split(',').each { |a| args << "-arch" << a } if cccfg? 'u'
     args << "-std=#{@arg0}" if @arg0 =~ /c[89]9/
     args
   end
@@ -190,7 +198,12 @@ class Cmd
     syslibpath
   end
   def ldflags
-    libpath.to_flags('-L')
+    args = libpath.to_flags('-L')
+    case mode
+    when :ld   then args << '-headerpad_max_install_names'
+    when :ccld then args << '-Wl,-headerpad_max_install_names'
+    end
+    args
   end
   def cppflags
     sys, opt = cpath

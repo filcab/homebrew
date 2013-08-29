@@ -14,6 +14,7 @@ require 'formulary'
 
 class Formula
   include FileUtils
+  include Utils::Inreplace
   extend BuildEnvironmentDSL
 
   attr_reader :name, :path, :homepage, :downloader
@@ -306,6 +307,10 @@ class Formula
     ]
   end
 
+  # Install python bindings inside of a block given to this method and/or
+  # call python so: `system python, "setup.py", "install", "--prefix=#{prefix}"
+  # Note that there are no quotation marks around python!
+  # <https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python>
   def python(options={:allowed_major_versions => [2, 3]}, &block)
     require 'python_helper'
     python_helper(options, &block)
@@ -350,7 +355,9 @@ class Formula
   end
 
   def self.installed
-    HOMEBREW_CELLAR.children.map do |rack|
+    return [] unless HOMEBREW_CELLAR.directory?
+
+    HOMEBREW_CELLAR.subdirs.map do |rack|
       begin
         factory(rack.basename.to_s)
       rescue FormulaUnavailableError
@@ -576,9 +583,7 @@ class Formula
     raise BuildError.new(self, cmd, args, $?)
   ensure
     f.close if f and not f.closed?
-    removed_ENV_variables.each do |key, value|
-      ENV[key] = value
-    end if removed_ENV_variables
+    ENV.update(removed_ENV_variables) if removed_ENV_variables
   end
 
   private

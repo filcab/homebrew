@@ -8,11 +8,15 @@ class Xpdf < Formula
   depends_on 'lesstif'
   depends_on :x11
 
+  conflicts_with 'pdf2image'
+  conflicts_with 'poppler'
+
   # see: http://gnats.netbsd.org/45562
   def patches; DATA; end
 
   def install
-    ENV.append_to_cflags "-I#{MacOS::X11.include} -#{MacOS::X11.include}/freetype2"
+    ENV.append_to_cflags "-I#{MacOS::X11.include} -I#{MacOS::X11.include}/freetype2"
+    ENV.append "LDFLAGS", "-L#{MacOS::X11.lib}"
 
     system "./configure", "--prefix=#{prefix}", "--mandir=#{man}"
     system "make"
