@@ -2,11 +2,8 @@ require 'formula'
 
 class Vim < Formula
   homepage 'http://www.vim.org/'
-  # Get the base 7.4 tarball from Vim.org. But once patches start again, go
-  # back to tracking Debian unstable here:
-  # http://ftp.de.debian.org/debian/pool/main/v/vim/
-  url 'http://ftp.vim.org/pub/vim/unix/vim-7.4.tar.bz2'
-  sha1 '601abf7cc2b5ab186f40d8790e542f86afca86b7'
+  url 'https://vim.googlecode.com/hg/', :tag => 'v7-4-027'
+  version '7.4.027'
 
   head 'https://vim.googlecode.com/hg/'
 
@@ -28,7 +25,7 @@ class Vim < Formula
     option "without-#{language}", "Build vim without #{language} support"
   end
 
-  depends_on :hg => :build if build.head?
+  depends_on :hg => :build
   depends_on :python => :recommended
 
   def install
