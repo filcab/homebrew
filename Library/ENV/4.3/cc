@@ -107,8 +107,8 @@ class Cmd
     whittler = @args.each
     loop do
       case arg = whittler.next
-      when '-arch', /^-Xarch_/
-        whittler.next
+      #when '-arch', /^-Xarch_/
+      #  whittler.next
       when '-m32'
         # If ENV.m32 was set, we allow the "-m32" flag, but we don't add anything
         args << '-m32' if cccfg? '3'
