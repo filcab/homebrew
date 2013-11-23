@@ -228,6 +228,7 @@ class CurlApacheMirrorDownloadStrategy < CurlDownloadStrategy
     end
     wr.close
 
+    rd.readline if ARGV.verbose? # Remove Homebrew output
     buf << rd.read until rd.eof?
     rd.close
     Process.wait(pid)
@@ -498,8 +499,15 @@ class GitDownloadStrategy < VCSDownloadStrategy
     @ref_type != :revision and host_supports_depth?
   end
 
+  SHALLOW_CLONE_WHITELIST = [
+    %r{git://},
+    %r{https://github\.com},
+    %r{http://git\.sv\.gnu\.org},
+    %r{http://llvm\.org},
+  ]
+
   def host_supports_depth?
-    @url =~ %r{git://} or @url =~ %r{https://github.com/}
+    SHALLOW_CLONE_WHITELIST.any? { |rx| rx === @url }
   end
 
   def repo_valid?
@@ -583,6 +591,15 @@ class GitDownloadStrategy < VCSDownloadStrategy
 end
 
 class CVSDownloadStrategy < VCSDownloadStrategy
+  def cvspath
+    @path ||= %W[
+      /usr/bin/cvs
+      #{HOMEBREW_PREFIX}/bin/cvs
+      #{HOMEBREW_PREFIX}/opt/cvs/bin/cvs
+      #{which("cvs")}
+      ].find { |p| File.executable? p }
+  end
+
   def cache_tag; "cvs" end
 
   def fetch
@@ -596,12 +613,12 @@ class CVSDownloadStrategy < VCSDownloadStrategy
 
     unless @clone.exist?
       HOMEBREW_CACHE.cd do
-        safe_system '/usr/bin/cvs', '-d', url, 'login'
-        safe_system '/usr/bin/cvs', '-d', url, 'checkout', '-d', cache_filename("cvs"), mod
+        safe_system cvspath, '-d', url, 'login'
+        safe_system cvspath, '-d', url, 'checkout', '-d', cache_filename("cvs"), mod
       end
     else
       puts "Updating #{@clone}"
-      @clone.cd { safe_system '/usr/bin/cvs', 'up' }
+      @clone.cd { safe_system cvspath, 'up' }
     end
   end
 
