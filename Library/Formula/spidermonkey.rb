@@ -14,10 +14,6 @@ class Spidermonkey < Formula
   depends_on 'nspr'
 
   def install
-    # aparently this flag causes the build to fail for ivanvc on 10.5 with a
-    # penryn (core 2 duo) CPU. So lets be cautious here and remove it.
-    ENV['CFLAGS'] = ENV['CFLAGS'].gsub(/-msse[^\s]+/, '') if MacOS.version <= :leopard
-
     cd "js/src" do
       # Remove the broken *(for anyone but FF) install_name
       inreplace "config/rules.mk",
@@ -40,5 +36,14 @@ class Spidermonkey < Formula
       # Also install js REPL.
       bin.install "shell/js"
     end
+  end
+
+  test do
+    path = testpath/"test.js"
+    path.write "print('hello');"
+
+    output = `#{bin}/js #{path}`.strip
+    assert_equal "hello", output
+    assert_equal 0, $?.exitstatus
   end
 end

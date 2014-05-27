@@ -3,8 +3,8 @@ require 'formula'
 class Play < Formula
   homepage 'http://www.playframework.org/'
   head 'https://github.com/playframework/playframework.git'
-  url 'http://downloads.typesafe.com/play/2.2.1/play-2.2.1.zip'
-  sha1 'e4567f3cf61536908d66e85bde48d7e953f0a01f'
+  url 'http://downloads.typesafe.com/play/2.2.3/play-2.2.3.zip'
+  sha1 '16beea55568a6b5876439ffbf908ba6448c5c713'
 
   conflicts_with 'sox', :because => 'both install `play` binaries'
 

@@ -12,28 +12,20 @@ module Homebrew extend self
 
     ARGV.named.each do |name|
       # if a formula has been tapped ignore the blacklisting
-      if not File.file? HOMEBREW_REPOSITORY/"Library/Formula/#{name}.rb"
+      unless Formula.path(name).file?
         msg = blacklisted? name
         raise "No available formula for #{name}\n#{msg}" if msg
       end
       if not File.exist? name and name =~ HOMEBREW_TAP_FORMULA_REGEX then
         require 'cmd/tap'
-        begin
-          install_tap $1, $2
-        rescue AlreadyTappedError => e
-        end
+        install_tap $1, $2
       end
     end unless ARGV.force?
 
     perform_preinstall_checks
+
     begin
-      ARGV.formulae.each do |f|
-        begin
-          install_formula(f)
-        rescue CannotInstallFormulaError => e
-          ofail e.message
-        end
-      end
+      ARGV.formulae.each { |f| install_formula(f) }
     rescue FormulaUnavailableError => e
       ofail e.message
       require 'cmd/search'
@@ -59,9 +51,11 @@ module Homebrew extend self
   def check_xcode
     require 'cmd/doctor'
     checks = Checks.new
-    doctor_methods = ['check_xcode_clt', 'check_xcode_license_approved',
-                      'check_for_osx_gcc_installer']
-    doctor_methods.each do |check|
+    %w[
+      check_for_installed_developer_tools
+      check_xcode_license_approved
+      check_for_osx_gcc_installer
+    ].each do |check|
       out = checks.send(check)
       opoo out unless out.nil?
     end
@@ -88,12 +82,23 @@ module Homebrew extend self
     check_ppc
     check_writable_install_location
     check_xcode
-    check_macports
     check_cellar
   end
 
   def install_formula f
     fi = FormulaInstaller.new(f)
+    fi.options             = f.build.used_options
+    fi.ignore_deps         = ARGV.ignore_deps? || ARGV.interactive?
+    fi.only_deps           = ARGV.only_deps?
+    fi.build_bottle        = ARGV.build_bottle?
+    fi.build_from_source   = ARGV.build_from_source?
+    fi.force_bottle        = ARGV.force_bottle?
+    fi.interactive         = ARGV.interactive?
+    fi.interactive       &&= :git if ARGV.flag? "--git"
+    fi.verbose             = ARGV.verbose?
+    fi.verbose           &&= :quieter if ARGV.quieter?
+    fi.debug               = ARGV.debug?
+    fi.prelude
     fi.install
     fi.caveats
     fi.finish
@@ -102,6 +107,8 @@ module Homebrew extend self
     # another formula. In that case, don't generate an error, just move on.
   rescue FormulaAlreadyInstalledError => e
     opoo e.message
-  # Ignore CannotInstallFormulaError and let caller handle it.
+  rescue CannotInstallFormulaError => e
+    ofail e.message
+    check_macports
   end
 end

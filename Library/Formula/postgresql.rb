@@ -2,24 +2,26 @@ require 'formula'
 
 class Postgresql < Formula
   homepage 'http://www.postgresql.org/'
-  url 'http://ftp.postgresql.org/pub/source/v9.3.1/postgresql-9.3.1.tar.bz2'
-  bottle do
-    sha1 '11a69f847f44c2f1e3d8be884350d9f6a723f454' => :mavericks
-    sha1 '936b14d5b2006e16cfb5ec9d58577b24cebc04c4' => :mountain_lion
-    sha1 '1fa00b15402e5928299a766db0aca3c85d70fef7' => :lion
-  end
+  url 'http://ftp.postgresql.org/pub/source/v9.3.4/postgresql-9.3.4.tar.bz2'
+  sha256 '9ee819574dfc8798a448dc23a99510d2d8924c2f8b49f8228cd77e4efc8a6621'
 
-  sha256 '8ea4a7a92a6f5a79359b02e683ace335c5eb45dffe7f8a681a9ce82470a8a0b8'
+  bottle do
+    revision 2
+    sha1 "a97e4f9364fd4518cc492135ac11832d4f8001c6" => :mavericks
+    sha1 "5c10d677a07a8055bfd21f94633f6d897e4a60f7" => :mountain_lion
+    sha1 "7da81a9d1dd086d6b1403d9a508d5871c85d2892" => :lion
+  end
 
   option '32-bit'
   option 'no-perl', 'Build without Perl support'
   option 'no-tcl', 'Build without Tcl support'
   option 'enable-dtrace', 'Build with DTrace support'
 
+  depends_on 'openssl'
   depends_on 'readline'
   depends_on 'libxml2' if MacOS.version <= :leopard # Leopard libxml is too old
   depends_on 'ossp-uuid' => :recommended
-  depends_on :python => :recommended
+  depends_on :python => :optional
 
   conflicts_with 'postgres-xc',
     :because => 'postgresql and postgres-xc install the same binaries.'
@@ -30,9 +32,7 @@ class Postgresql < Formula
   end
 
   # Fix uuid-ossp build issues: http://archives.postgresql.org/pgsql-general/2012-07/msg00654.php
-  def patches
-    DATA
-  end
+  patch :DATA
 
   def install
     ENV.libxml2 if MacOS.version >= :snow_leopard
@@ -76,7 +76,7 @@ class Postgresql < Formula
 
   def post_install
     unless File.exist? "#{var}/postgres"
-      system "#{bin}/initdb", "#{var}/postgres", '-E', 'utf8'
+      system "#{bin}/initdb", "#{var}/postgres"
     end
   end
 
@@ -84,7 +84,7 @@ class Postgresql < Formula
     s = <<-EOS.undent
     If builds of PostgreSQL 9 are failing and you have version 8.x installed,
     you may need to remove the previous version first. See:
-      https://github.com/mxcl/homebrew/issues/issue/2510
+      https://github.com/Homebrew/homebrew/issues/issue/2510
 
     To migrate existing data from a previous major version (pre-9.3) of PostgreSQL, see:
       http://www.postgresql.org/docs/9.3/static/upgrading.html
@@ -115,7 +115,7 @@ class Postgresql < Formula
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
       <array>
-        <string>#{opt_prefix}/bin/postgres</string>
+        <string>#{opt_bin}/postgres</string>
         <string>-D</string>
         <string>#{var}/postgres</string>
         <string>-r</string>
@@ -130,6 +130,10 @@ class Postgresql < Formula
     </dict>
     </plist>
     EOS
+  end
+
+  test do
+    system "#{bin}/initdb", testpath
   end
 end
 

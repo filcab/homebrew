@@ -53,10 +53,18 @@ class Checks
   def inject_file_list(list, str)
     list.inject(str) { |s, f| s << "    #{f}\n" }
   end
+
+  # Git will always be on PATH because of the wrapper script in
+  # Library/Contributions/cmd, so we check if there is a *real*
+  # git here to avoid multiple warnings.
+  def git?
+    return @git if instance_variable_defined?(:@git)
+    @git = system "git --version >/dev/null 2>&1"
+  end
 ############# END HELPERS
 
 # Sorry for the lack of an indent here, the diff would have been unreadable.
-# See https://github.com/mxcl/homebrew/pull/9986
+# See https://github.com/Homebrew/homebrew/pull/9986
 def check_path_for_trailing_slashes
   bad_paths = ENV['PATH'].split(File::PATH_SEPARATOR).select { |p| p[-1..-1] == '/' }
   return if bad_paths.empty?
@@ -190,71 +198,79 @@ def check_for_broken_symlinks
   end
 end
 
-def check_xcode_clt
-  if MacOS.version >= :mavericks
-    __check_clt_up_to_date
-  elsif MacOS::Xcode.installed?
-    __check_xcode_up_to_date
-  elsif MacOS.version >= :lion
-    __check_clt_up_to_date
-  else <<-EOS.undent
-      Xcode is not installed
-      Most formulae need Xcode to build.
-      It can be installed from https://developer.apple.com/downloads/
-    EOS
+if MacOS.version >= "10.9"
+  def check_for_installed_developer_tools
+    unless MacOS::Xcode.installed? || MacOS::CLT.installed? then <<-EOS.undent
+      No developer tools installed.
+      Install the Command Line Tools:
+        xcode-select --install
+      EOS
+    end
   end
-end
 
-def __check_xcode_up_to_date
-  if MacOS::Xcode.outdated?
-    message = <<-EOS.undent
+  def check_xcode_up_to_date
+    if MacOS::Xcode.installed? && MacOS::Xcode.outdated? then <<-EOS.undent
       Your Xcode (#{MacOS::Xcode.version}) is outdated
       Please update to Xcode #{MacOS::Xcode.latest_version}.
-    EOS
-    if MacOS.version >= :lion
-      message += <<-EOS.undent
       Xcode can be updated from the App Store.
       EOS
-    else
-      message += <<-EOS.undent
-      Xcode can be updated from https://developer.apple.com/downloads/
+    end
+  end
+
+  def check_clt_up_to_date
+    if MacOS::CLT.installed? && MacOS::CLT.outdated? then <<-EOS.undent
+      A newer Command Line Tools release is available.
+      Update them from Software Update in the App Store.
       EOS
     end
-    message
   end
-end
-
-def __check_clt_up_to_date
-  if not MacOS::CLT.installed?
-    message = <<-EOS.undent
+elsif MacOS.version == "10.8" || MacOS.version == "10.7"
+  def check_for_installed_developer_tools
+    unless MacOS::Xcode.installed? || MacOS::CLT.installed? then <<-EOS.undent
       No developer tools installed.
       You should install the Command Line Tools.
-    EOS
-    if MacOS.version >= :mavericks
-      message += <<-EOS.undent
-        Run `xcode-select --install` to install them.
-      EOS
-    else
-      message += <<-EOS.undent
-        The standalone package can be obtained from
-        https://developer.apple.com/downloads/,
-        or it can be installed via Xcode's preferences.
+      The standalone package can be obtained from
+        https://developer.apple.com/downloads
+      or it can be installed via Xcode's preferences.
       EOS
     end
-    message
-  elsif MacOS::CLT.outdated?
-    message = <<-EOS.undent
-      A newer Command Line Tools release is available
-    EOS
-    if MacOS.version >= :mavericks
-      message += <<-EOS.undent
-        Update them from Software Update in the App Store.
+  end
+
+  def check_xcode_up_to_date
+    if MacOS::Xcode.installed? && MacOS::Xcode.outdated? then <<-EOS.undent
+      Your Xcode (#{MacOS::Xcode.version}) is outdated
+      Please update to Xcode #{MacOS::Xcode.latest_version}.
+      Xcode can be updated from
+        https://developer.apple.com/downloads
       EOS
-    else
-      message += <<-EOS.undent
-        The standalone package can be obtained from
-        https://developer.apple.com/downloads/,
-        or it can be installed via Xcode's preferences.
+    end
+  end
+
+  def check_clt_up_to_date
+    if MacOS::CLT.installed? && MacOS::CLT.outdated? then <<-EOS.undent
+      A newer Command Line Tools release is available.
+      The standalone package can be obtained from
+        https://developer.apple.com/downloads
+      or it can be installed via Xcode's preferences.
+      EOS
+    end
+  end
+else
+  def check_for_installed_developer_tools
+    unless MacOS::Xcode.installed? then <<-EOS.undent
+      Xcode is not installed. Most formulae need Xcode to build.
+      It can be installed from
+        https://developer.apple.com/downloads
+      EOS
+    end
+  end
+
+  def check_xcode_up_to_date
+    if MacOS::Xcode.installed? && MacOS::Xcode.outdated? then <<-EOS.undent
+      Your Xcode (#{MacOS::Xcode.version}) is outdated
+      Please update to Xcode #{MacOS::Xcode.latest_version}.
+      Xcode can be updated from
+        https://developer.apple.com/downloads
       EOS
     end
   end
@@ -292,24 +308,6 @@ def check_for_stray_developer_directory
     You have leftover files from an older version of Xcode.
     You should delete them using:
       #{uninstaller}
-    EOS
-  end
-end
-
-def check_cc
-  if !MacOS::CLT.installed? && MacOS::Xcode.version < "4.3"
-    'No compiler found in /usr/bin!'
-  end
-end
-
-def check_standard_compilers
-  return if check_xcode_clt # only check if Xcode is up to date
-  compiler_status = MacOS.compilers_standard?
-  if not compiler_status and not compiler_status.nil? then <<-EOS.undent
-    Your compilers are different from the standard versions for your Xcode.
-    If you have Xcode 4.3 or newer, you should install the Command Line Tools for
-    Xcode from within Xcode's Download preferences.
-    Otherwise, you should reinstall Xcode.
     EOS
   end
 end
@@ -437,16 +435,8 @@ def check_xcode_prefix_exists
 end
 
 def check_xcode_select_path
-  # with the advent of CLT-only support, we don't need xcode-select
-
-  if MacOS::Xcode.bad_xcode_select_path?
-    <<-EOS.undent
-      Your xcode-select path is set to /
-      You must unset it or builds will hang:
-        sudo rm /usr/share/xcode-select/xcode_dir_*
-    EOS
-  elsif not MacOS::CLT.installed? and not File.file? "#{MacOS::Xcode.folder}/usr/bin/xcodebuild"
-    path = MacOS.app_with_bundle_id(MacOS::Xcode::V4_BUNDLE_ID) || MacOS.app_with_bundle_id(MacOS::Xcode::V3_BUNDLE_ID)
+  if not MacOS::CLT.installed? and not File.file? "#{MacOS.active_developer_dir}/usr/bin/xcodebuild"
+    path = MacOS::Xcode.bundle_path
     path = '/Developer' if path.nil? or not path.directory?
     <<-EOS.undent
       Your Xcode is configured with an invalid path.
@@ -500,7 +490,7 @@ def check_user_path_2
     <<-EOS.undent
       Homebrew's bin was not found in your PATH.
       Consider setting the PATH for example like so
-          echo export PATH="#{HOMEBREW_PREFIX}/bin:$PATH" >> ~/.bash_profile
+          echo export PATH='#{HOMEBREW_PREFIX}/bin:$PATH' >> ~/.bash_profile
     EOS
   end
 end
@@ -514,14 +504,14 @@ def check_user_path_3
         Homebrew's sbin was not found in your PATH but you have installed
         formulae that put executables in #{HOMEBREW_PREFIX}/sbin.
         Consider setting the PATH for example like so
-            echo export PATH="#{HOMEBREW_PREFIX}/sbin:$PATH" >> ~/.bash_profile
+            echo export PATH='#{HOMEBREW_PREFIX}/sbin:$PATH' >> ~/.bash_profile
       EOS
     end
   end
 end
 
 def check_user_curlrc
-  if %w[CURL_HOME HOME].any?{|key| ENV[key] and File.exists? "#{ENV[key]}/.curlrc" } then <<-EOS.undent
+  if %w[CURL_HOME HOME].any?{|key| ENV[key] and File.exist? "#{ENV[key]}/.curlrc" } then <<-EOS.undent
     You have a curlrc file
     If you have trouble downloading packages with Homebrew, then maybe this
     is the problem? If the following command doesn't work, then try removing
@@ -689,8 +679,7 @@ def check_for_multiple_volumes
   # Find the volumes for the TMP folder & HOMEBREW_CELLAR
   real_cellar = HOMEBREW_CELLAR.realpath
 
-  tmp_prefix = ENV['HOMEBREW_TEMP'] || '/tmp'
-  tmp = Pathname.new with_system_path { `mktemp -d #{tmp_prefix}/homebrew-brew-doctor-XXXX` }.strip
+  tmp = Pathname.new with_system_path { `mktemp -d #{HOMEBREW_TEMP}/homebrew-brew-doctor-XXXX` }.strip
   real_temp = tmp.realpath.parent
 
   where_cellar = volumes.which real_cellar
@@ -711,8 +700,7 @@ end
 
 def check_filesystem_case_sensitive
   volumes = Volumes.new
-  tmp_prefix = Pathname.new(ENV['HOMEBREW_TEMP'] || '/tmp')
-  case_sensitive_vols = [HOMEBREW_PREFIX, HOMEBREW_REPOSITORY, HOMEBREW_CELLAR, tmp_prefix].select do |dir|
+  case_sensitive_vols = [HOMEBREW_PREFIX, HOMEBREW_REPOSITORY, HOMEBREW_CELLAR, HOMEBREW_TEMP].select do |dir|
     # We select the dir as being case-sensitive if either the UPCASED or the
     # downcased variant is missing.
     # Of course, on a case-insensitive fs, both exist because the os reports so.
@@ -744,7 +732,7 @@ def __check_git_version
 end
 
 def check_for_git
-  if which "git"
+  if git?
     __check_git_version
   else <<-EOS.undent
     Git could not be found in your PATH.
@@ -756,7 +744,7 @@ def check_for_git
 end
 
 def check_git_newline_settings
-  return unless which "git"
+  return unless git?
 
   autocrlf = `git config --get core.autocrlf`.chomp
 
@@ -768,13 +756,13 @@ def check_git_newline_settings
 
     If you are not routinely dealing with Windows-based projects,
     consider removing these by running:
-    `git config --global --set core.autocrlf input`
+    `git config --global core.autocrlf input`
     EOS
   end
 end
 
 def check_git_origin
-  return unless which('git') && (HOMEBREW_REPOSITORY/'.git').exist?
+  return unless git? && (HOMEBREW_REPOSITORY/'.git').exist?
 
   HOMEBREW_REPOSITORY.cd do
     origin = `git config --get remote.origin.url`.strip
@@ -785,9 +773,9 @@ def check_git_origin
       Without a correctly configured origin, Homebrew won't update
       properly. You can solve this by adding the Homebrew remote:
         cd #{HOMEBREW_REPOSITORY}
-        git remote add origin https://github.com/mxcl/homebrew.git
+        git remote add origin https://github.com/Homebrew/homebrew.git
       EOS
-    elsif origin !~ /mxcl\/homebrew(\.git)?$/ then <<-EOS.undent
+    elsif origin !~ /(mxcl|Homebrew)\/homebrew(\.git)?$/ then <<-EOS.undent
       Suspicious git origin remote found.
 
       With a non-standard origin, Homebrew won't pull updates from
@@ -796,7 +784,7 @@ def check_git_origin
 
       Unless you have compelling reasons, consider setting the
       origin remote to point at the main repository, located at:
-        https://github.com/mxcl/homebrew.git
+        https://github.com/Homebrew/homebrew.git
       EOS
     end
   end
@@ -819,12 +807,13 @@ end
 def __check_linked_brew f
   links_found = []
 
-  f.prefix.find do |src|
-    dst=HOMEBREW_PREFIX+src.relative_path_from(f.prefix)
-    next unless dst.symlink?
+  prefix = f.prefix
 
-    dst_points_to = dst.realpath()
-    next unless dst_points_to.to_s == src.to_s
+  prefix.find do |src|
+    next if src == prefix
+    dst = HOMEBREW_PREFIX + src.relative_path_from(prefix)
+
+    next if !dst.symlink? || !dst.exist? || src != dst.resolved_path
 
     if src.directory?
       Find.prune
@@ -917,9 +906,9 @@ def check_missing_deps
 end
 
 def check_git_status
-  return unless which "git"
+  return unless git?
   HOMEBREW_REPOSITORY.cd do
-    unless `git status -s -- Library/Homebrew/ 2>/dev/null`.chomp.empty?
+    unless `git status --untracked-files=all --porcelain -- Library/Homebrew/ 2>/dev/null`.chomp.empty?
       <<-EOS.undent_________________________________________________________72
       You have uncommitted modifications to Homebrew
       If this a surprise to you, then you should stash these modifications.
@@ -958,6 +947,17 @@ def check_for_enthought_python
   end
 end
 
+def check_for_library_python
+  if File.exist?("/Library/Frameworks/Python.framework") then <<-EOS.undent
+    Python is installed at /Library/Frameworks/Python.framework
+
+    Homebrew only supports building against the System-provided Python or a
+    brewed Python. In particular, Pythons installed to /Library can interfere
+    with other software installs.
+    EOS
+  end
+end
+
 def check_for_old_homebrew_share_python_in_path
   s = ''
   ['', '3'].map do |suffix|
@@ -980,7 +980,6 @@ end
 
 def check_for_bad_python_symlink
   return unless which "python"
-  # Indeed Python -V outputs to stderr (WTF?)
   `python -V 2>&1` =~ /Python (\d+)\./
   # This won't be the right warning if we matched nothing at all
   return if $1.nil?
@@ -1018,7 +1017,7 @@ def check_for_pydistutils_cfg_in_home
 end
 
 def check_for_outdated_homebrew
-  return unless which 'git'
+  return unless git?
   HOMEBREW_REPOSITORY.cd do
     if File.directory? ".git"
       local = `git rev-parse -q --verify refs/remotes/origin/master`.chomp
@@ -1070,18 +1069,18 @@ def check_for_unlinked_but_not_keg_only
 end
 
   def check_xcode_license_approved
-    return if MacOS::Xcode.bad_xcode_select_path?
     # If the user installs Xcode-only, they have to approve the
     # license or no "xc*" tool will work.
-    <<-EOS.undent if `/usr/bin/xcrun clang 2>&1` =~ /license/ and not $?.success?
-    You have not agreed to the Xcode license.
-    Builds will fail! Agree to the license by opening Xcode.app or running:
-        xcodebuild -license
-    EOS
+    if `/usr/bin/xcrun clang 2>&1` =~ /license/ and not $?.success? then <<-EOS.undent
+      You have not agreed to the Xcode license.
+      Builds will fail! Agree to the license by opening Xcode.app or running:
+          xcodebuild -license
+      EOS
+    end
   end
 
   def check_for_latest_xquartz
-    return unless MacOS::XQuartz.installed?
+    return unless MacOS::XQuartz.version
     return if MacOS::XQuartz.provided_by_apple?
 
     installed_version = Version.new(MacOS::XQuartz.version)
@@ -1094,6 +1093,16 @@ end
       Please install XQuartz #{latest_version}:
         https://xquartz.macosforge.org
     EOS
+  end
+
+  def check_for_old_env_vars
+    if ENV["HOMEBREW_KEEP_INFO"]
+      <<-EOS.undent
+      `HOMEBREW_KEEP_INFO` is no longer used
+      info files are no longer deleted by default; you may
+      remove this environment variable.
+      EOS
+    end
   end
 end # end class Checks
 

@@ -2,10 +2,11 @@ require 'formula'
 
 class Bitlbee < Formula
   homepage 'http://www.bitlbee.org/'
-  url 'http://get.bitlbee.org/src/bitlbee-3.2.tar.gz'
-  sha1 '21e17f082c776566429603b1e8c966983a75ac9e'
+  url 'http://get.bitlbee.org/src/bitlbee-3.2.1.tar.gz'
+  sha1 '954471ab87206826c072f31b3def40a1be5a78f5'
+  revision 2
 
-  option 'with-libpurple', "Use libpurple for all communication with instant messaging networks"
+  option 'with-finch', "Use finch/libpurple for all communication with instant messaging networks"
   option 'with-libotr', "Build with otr (off the record) support"
 
   depends_on 'pkg-config' => :build
@@ -15,6 +16,14 @@ class Bitlbee < Formula
   depends_on 'finch' => :optional
   depends_on 'libotr' => :optional
 
+  if build.with? "libotr"
+    # Head versions of bitlbee support otr4, but there is no release yet.
+    patch do
+      url "http://ftp.de.debian.org/debian/pool/main/b/bitlbee/bitlbee_3.2.1+otr4-1.diff.gz"
+      sha1 "a05af5ec8912f85b876f90e75a78dc4f98917ead"
+    end
+  end
+
   def install
     args = ["--prefix=#{prefix}",
             "--debug=0",
@@ -23,7 +32,7 @@ class Bitlbee < Formula
             "--config=#{var}/bitlbee/lib/",
             "--ipsocket=#{var}/bitlbee/run/bitlbee.sock"]
 
-    args << "--purple=1" if build.with? "libpurple"
+    args << "--purple=1" if build.with? "finch"
     args << "--otr=1" if build.with? "libotr"
 
     system "./configure", *args

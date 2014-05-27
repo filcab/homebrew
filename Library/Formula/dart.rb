@@ -4,14 +4,14 @@ class Dart < Formula
   homepage 'http://www.dartlang.org/'
 
   if MacOS.prefer_64_bit?
-    url 'http://storage.googleapis.com/dart-archive/channels/stable/release/30188/sdk/dartsdk-macos-x64-release.zip'
-    sha1 '1488243e69a12194625a8ef483cfd3614f7e14f0'
+    url 'http://storage.googleapis.com/dart-archive/channels/stable/release/36345/sdk/dartsdk-macos-x64-release.zip'
+    sha1 '8ed175ea11d41298f5fcbea569f16d349fa798f0'
   else
-    url 'http://storage.googleapis.com/dart-archive/channels/stable/release/30188/sdk/dartsdk-macos-ia32-release.zip'
-    sha1 '59b7119ad7db5823c5959c57bd0943a7428430db'
+    url 'http://storage.googleapis.com/dart-archive/channels/stable/release/36345/sdk/dartsdk-macos-ia32-release.zip'
+    sha1 '4562f8ca166b50b2be882130a6a666de1b58f887'
   end
 
-  version '30188'
+  version '1.4.0'
 
   def install
     libexec.install Dir['*']
@@ -21,7 +21,7 @@ class Dart < Formula
 
   def caveats; <<-EOS.undent
     To use with IntelliJ, set the Dart home to:
-      #{opt_prefix}/libexec
+      #{opt_libexec}
     EOS
   end
 

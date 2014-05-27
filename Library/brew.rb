@@ -11,24 +11,37 @@ if ARGV == %w{--prefix}
 end
 
 require 'pathname'
-HOMEBREW_LIBRARY_PATH = Pathname.new(__FILE__).realpath.dirname.parent.join("Library/Homebrew").to_s
-$:.unshift(HOMEBREW_LIBRARY_PATH + '/vendor')
-$:.unshift(HOMEBREW_LIBRARY_PATH)
+HOMEBREW_LIBRARY_PATH = Pathname.new(__FILE__).realpath.dirname.parent.join("Library", "Homebrew")
+$:.unshift(HOMEBREW_LIBRARY_PATH.to_s)
 require 'global'
 
-case ARGV.first when '-h', '--help', '--usage', '-?', 'help', nil
+if ARGV.help?
   require 'cmd/help'
-  puts Homebrew.help_s
-  exit ARGV.first ? 0 : 1
-when '--version'
+  puts ARGV.usage
+  exit ARGV.any? ? 0 : 1
+elsif ARGV.version?
   puts HOMEBREW_VERSION
   exit 0
-when '-v'
+elsif ARGV.first == '-v'
   puts "Homebrew #{HOMEBREW_VERSION}"
   # Shift the -v to the end of the parameter list
   ARGV << ARGV.shift
   # If no other arguments, just quit here.
   exit 0 if ARGV.length == 1
+end
+
+# Check for bad xcode-select before anything else, because `doctor` and
+# many other things will hang
+# Note that this bug was fixed in 10.9
+if OS.mac? && MacOS.version < :mavericks && MacOS.active_developer_dir == "/"
+  odie <<-EOS.undent
+  Your xcode-select path is currently set to '/'.
+  This causes the `xcrun` tool to hang, and can render Homebrew unusable.
+  If you are using Xcode, you should:
+    sudo xcode-select -switch /Applications/Xcode.app
+  Otherwise, you should:
+    sudo rm -rf /usr/share/xcode-select
+  EOS
 end
 
 case HOMEBREW_PREFIX.to_s when '/', '/usr'
@@ -48,7 +61,7 @@ Dir.getwd rescue abort "The current working directory doesn't exist, cannot proc
 
 
 def require? path
-  require path.to_s.chomp
+  require path
 rescue LoadError => e
   # HACK :( because we should raise on syntax errors but
   # not if the file doesn't exist. TODO make robust!
@@ -71,7 +84,7 @@ begin
              'dr' => 'doctor',
              '--repo' => '--repository',
              'environment' => '--env',
-             '-c1' => '--config',
+             '--config' => 'config',
              }
 
   cmd = ARGV.shift
@@ -86,16 +99,17 @@ begin
   end
 
   # Add contributed commands to PATH before checking.
-  ENV['PATH'] += ":#{HOMEBREW_CONTRIB}/cmd"
-  if require? HOMEBREW_REPOSITORY/"Library/Homebrew/cmd"/cmd
+  ENV['PATH'] += "#{File::PATH_SEPARATOR}#{HOMEBREW_CONTRIB}/cmd"
+
+  if require? HOMEBREW_LIBRARY_PATH.join("cmd", cmd)
     Homebrew.send cmd.to_s.gsub('-', '_').downcase
   elsif which "brew-#{cmd}"
     %w[CACHE CELLAR LIBRARY_PATH PREFIX REPOSITORY].each do |e|
-      ENV["HOMEBREW_#{e}"] = Object.const_get "HOMEBREW_#{e}"
+      ENV["HOMEBREW_#{e}"] = Object.const_get("HOMEBREW_#{e}").to_s
     end
     exec "brew-#{cmd}", *ARGV
-  elsif require? which("brew-#{cmd}.rb").to_s
-    exit 0
+  elsif (path = which("brew-#{cmd}.rb")) && require?(path)
+    exit Homebrew.failed? ? 1 : 0
   else
     onoe "Unknown command: #{cmd}"
     exit 1

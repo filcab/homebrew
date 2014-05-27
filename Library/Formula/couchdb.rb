@@ -2,19 +2,18 @@ require 'formula'
 
 class Couchdb < Formula
   homepage "http://couchdb.apache.org/"
-  url 'http://www.apache.org/dyn/closer.cgi?path=/couchdb/source/1.5.0/apache-couchdb-1.5.0.tar.gz'
-  sha1 '283e4bbd4f1727bb334a67d2f988a7d412523bef'
+  url 'http://www.apache.org/dyn/closer.cgi?path=/couchdb/source/1.5.1/apache-couchdb-1.5.1.tar.gz'
+  sha1 '5340c79f8f9e11742b723f92e2251d4d59b8247c'
 
   head do
     url 'http://git-wip-us.apache.org/repos/asf/couchdb.git'
 
-    depends_on :automake => :build
-    depends_on :libtool => :build
-    # CouchDB >=1.3.0 requires autoconf 2.63 or higher
-    depends_on 'autoconf' => :build
-    depends_on 'autoconf-archive' => :build
-    depends_on 'pkg-config' => :build
-    depends_on 'help2man' => :build
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
+    depends_on "autoconf-archive" => :build
+    depends_on "pkg-config" => :build
+    depends_on "help2man" => :build
   end
 
   depends_on 'spidermonkey'
@@ -67,7 +66,7 @@ class Couchdb < Formula
       <string>#{plist_name}</string>
       <key>ProgramArguments</key>
       <array>
-        <string>#{opt_prefix}/bin/couchdb</string>
+        <string>#{opt_bin}/couchdb</string>
       </array>
       <key>RunAtLoad</key>
       <true/>
@@ -76,7 +75,7 @@ class Couchdb < Formula
     EOS
   end
 
-  def test
+  test do
     # ensure couchdb embedded spidermonkey vm works
     system "#{bin}/couchjs", "-h"
   end

@@ -1,12 +1,11 @@
 require 'formula'
 
+# Stay at least one version behind and use the old-versions directory, because
+# tarballs are routinely removed and upstream won't change this practice.
 class Pngcrush < Formula
   homepage 'http://pmt.sourceforge.net/pngcrush/'
-  # Stay at least one version behind and use the old-versions directory,
-  # because tarballs are routinely removed and upstream won't change this
-  # practice.
-  url 'http://downloads.sourceforge.net/project/pmt/pngcrush/old-versions/1.7/1.7.60/pngcrush-1.7.60.tar.gz'
-  sha1 'ada052647368eb542e00df2fa2dd120bee346725'
+  url 'https://downloads.sourceforge.net/project/pmt/pngcrush/1.7.73/pngcrush-1.7.73.tar.gz'
+  sha1 '49b86afe5a17f58c938e68d2252a6c75408de02b'
 
   def install
     # Required to successfully build the bundled zlib 1.2.6

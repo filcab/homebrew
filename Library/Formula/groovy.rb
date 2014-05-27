@@ -2,14 +2,8 @@ require 'formula'
 
 class Groovy < Formula
   homepage 'http://groovy.codehaus.org/'
-  url 'http://dist.groovy.codehaus.org/distributions/groovy-binary-2.2.0.zip'
-  sha1 'e4c80b14fd21b168c1682b26f117e6427f9e712f'
-
-  devel do
-    url 'http://dist.groovy.codehaus.org/distributions/groovy-binary-2.2.0-rc-3.zip'
-    sha1 '4db741568aa6ab1ba333f40f4e25aa63653faa76'
-    version '2.2.0-rc3'
-  end
+  url 'http://dl.bintray.com/groovy/maven/groovy-binary-2.3.1.zip'
+  sha1 'd45f23c022e3465614a5ff75041b6b87abe76ea1'
 
   option 'invokedynamic', "Install the InvokeDynamic version of Groovy (only works with Java 1.7+)"
 
@@ -32,8 +26,8 @@ class Groovy < Formula
 
   def caveats
     <<-EOS.undent
-      You should set the environment variable GROOVY_HOME to
-        #{opt_prefix}/libexec
+      You should set GROOVY_HOME:
+        export GROOVY_HOME=#{opt_libexec}
     EOS
   end
 end
