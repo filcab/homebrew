@@ -6,8 +6,6 @@ class Oniguruma < Formula
   sha1 '804132e1324ef8b940414324c741547d7ecf24e8'
 
   def install
-    ENV.m32
-    ENV.append_to_cflags "-arch i386 -m32"
     system "./configure", "--disable-debug", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
     system "make install"
