@@ -84,7 +84,7 @@ class Step
   end
 
   def has_output?
-    @output and @output.any?
+    @output && !@output.empty?
   end
 
   def run
@@ -391,19 +391,12 @@ class Test
   end
 
   def check_results
-    message = "All tests passed and raring to brew."
-
     status = :passed
     steps.each do |step|
       case step.status
       when :passed  then next
       when :running then raise
-      when :failed  then
-        if status == :passed
-          status = :failed
-          message = ""
-        end
-        message += "#{step.command}: #{step.status.to_s.upcase}\n"
+      when :failed  then status = :failed
       end
     end
     status == :passed
@@ -522,7 +515,11 @@ if ARGV.include? "--junit"
       failure = testcase.add_element 'failure' if step.failed?
       if step.has_output?
         # Remove invalid XML CData characters from step output.
-        output = REXML::CData.new step.output.delete("\000\b\e\f")
+        output = step.output
+        if output.respond_to?(:force_encoding) && !output.valid_encoding?
+          output.force_encoding(Encoding::UTF_8)
+        end
+        output = REXML::CData.new output.delete("\000\a\b\e\f")
         if step.passed?
           system_out = testcase.add_element 'system-out'
           system_out.text = output
