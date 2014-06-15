@@ -12,7 +12,7 @@ class Nmap < Formula
     sha1 "8617fe3e4e3ddb50902968d8323a4cc9bef92bd1" => :lion
   end
 
-  depends_on "openssl"
+  #depends_on "openssl"
 
   conflicts_with 'ndiff', :because => 'both install `ndiff` binaries'
 
@@ -23,11 +23,11 @@ class Nmap < Formula
   def install
     ENV.deparallelize
 
+      #--with-openssl=#{Formula["openssl"].prefix}
     args = %W[
       --prefix=#{prefix}
       --with-libpcre=included
       --with-liblua=included
-      --with-openssl=#{Formula["openssl"].prefix}
       --without-nmap-update
       --without-zenmap
       --disable-universal
