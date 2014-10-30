@@ -5,26 +5,36 @@ require 'formula'
 # elixir are compatible.
 class Erlang < Formula
   homepage 'http://www.erlang.org'
-  # Download tarball from GitHub; it is served faster than the official tarball.
-  url "https://github.com/erlang/otp/archive/OTP-17.0.tar.gz"
-  sha1 "efa0dd17267ff41d47df94978b7573535c0da775"
+
+  stable do
+    # Download tarball from GitHub; it is served faster than the official tarball.
+    url "https://github.com/erlang/otp/archive/OTP-17.3.tar.gz"
+    sha1 "655e23a4f98b8ba4976dc417f0e876b40df74a7b"
+
+    # Upstream patch to fix http://erlang.org/pipermail/erlang-questions/2014-September/081176.html
+    patch do
+      url "https://github.com/erlang/otp/commit/b196730a325cfe74312c3a5f4b1273ba7c705ed6.diff"
+      sha1 "382fcaf4502adaac4f4c00dd46f64adb0ae84212"
+    end
+  end
 
   head 'https://github.com/erlang/otp.git', :branch => 'master'
 
   bottle do
-    sha1 "e66a588dbb8062943fc650316f7c8fac81d65134" => :mavericks
-    sha1 "33a0b50b5fb45ad2a66c80698eb6f6a865a67ade" => :mountain_lion
-    sha1 "a822dd97c1c12ead5458540d68b92615cf32e937" => :lion
+    revision 1
+    sha1 "5ae67e0c66797577a68bc7c19acaa2e6cc195210" => :yosemite
+    sha1 "ce9af75253ae5428016817d3500781e117ebd814" => :mavericks
+    sha1 "5f164928053cb0bb938b8f8b5c182788c5aaf7a3" => :mountain_lion
   end
 
   resource "man" do
-    url "http://www.erlang.org/download/otp_doc_man_17.0.tar.gz"
-    sha1 "50106b77a527b9369793197c3d07a8abe4e0a62d"
+    url "http://www.erlang.org/download/otp_doc_man_17.3.tar.gz"
+    sha1 "3f7717186f572bb6431e1a1e5bc6c0f5ffd53171"
   end
 
   resource "html" do
-    url "http://www.erlang.org/download/otp_doc_html_17.0.tar.gz"
-    sha1 "9a154d937c548f67f2c4e3691a6f36851a150be9"
+    url "http://www.erlang.org/download/otp_doc_html_17.3.tar.gz"
+    sha1 "fee5762225ef990e8c07aa4baa563a57208b0198"
   end
 
   option 'disable-hipe', "Disable building hipe; fails on various OS X systems"
@@ -43,8 +53,6 @@ class Erlang < Formula
   fails_with :llvm
 
   def install
-    ohai "Compilation takes a long time; use `brew install -v erlang` to see progress" unless ARGV.verbose?
-
     # Unset these so that building wx, kernel, compiler and
     # other modules doesn't fail with an unintelligable error.
     %w[LIBS FLAGS AFLAGS ZFLAGS].each { |k| ENV.delete("ERL_#{k}") }

@@ -17,12 +17,22 @@ class ArgvExtensionTests < Homebrew::TestCase
     @argv << 'mxcl'
     assert_equal 1, @argv.kegs.length
   ensure
-    keg.rmtree
+    keg.parent.rmtree
   end
 
   def test_argv_named
-    @argv << 'mxcl' << '--debug' << '-v'
-    assert_equal 1, @argv.named.length
+    @argv << "foo" << "--debug" << "-v"
+    assert_equal %w[foo], @argv.named
+  end
+
+  def test_options_only
+    @argv << "--foo" << "-vds" << "a" << "b" << "cdefg"
+    assert_equal %w[--foo -vds], @argv.options_only
+  end
+
+  def test_flags_only
+    @argv << "--foo" << "-vds" << "a" << "b" << "cdefg"
+    assert_equal %w[--foo], @argv.flags_only
   end
 
   def test_empty_argv

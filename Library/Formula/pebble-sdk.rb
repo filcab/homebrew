@@ -2,12 +2,12 @@ require 'formula'
 
 class PebbleSdk < Formula
   homepage 'https://developer.getpebble.com/2/'
-  url 'https://s3.amazonaws.com/assets.getpebble.com/sdk2/PebbleSDK-2.2.tar.gz'
-  sha1 '762ac37470cae308be38c0d2dfa7fc15c67303d4'
+  url 'https://s3.amazonaws.com/assets.getpebble.com/sdk2/PebbleSDK-2.7.tar.gz'
+  sha1 'e39d5533993e755a87c4f1c2a34f5324b1b082fe'
 
   bottle do
-    sha1 "a0b31517110e68148ec1bb395533c8d260bd52ae" => :mavericks
-    sha1 "28de175c4ec571a53f522763b1e7f137de5515b0" => :mountain_lion
+    sha1 "a858e52fca1b114d7a1abc1791126999dd466c30" => :mavericks
+    sha1 "3ab75e6021c1ed0b866046cba28320700cc0c289" => :mountain_lion
   end
 
   depends_on :macos => :mountain_lion
@@ -84,8 +84,7 @@ class PebbleSdk < Formula
     resource('pyserial').stage { system "python", *install_args }
     resource('pypng').stage { system "python", *install_args }
 
-    doc.install %w[Documentation Examples PebbleKit-Android
-        PebbleKit-iOS README.txt]
+    doc.install %w[Documentation Examples README.txt]
     prefix.install %w[Pebble bin tools requirements.txt version.txt]
 
     resource('pebble-arm-toolchain').stage do
@@ -106,7 +105,7 @@ class PebbleSdk < Formula
   end
 
   def caveats; <<-EOS.undent
-    Documentation, examples and Android/iOS kits can be found in
+    Documentation and examples can be found in
       #{doc}
     EOS
   end

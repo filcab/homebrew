@@ -2,22 +2,21 @@ require "formula"
 
 class Davix < Formula
   homepage "http://dmc.web.cern.ch/projects/davix/home"
+  url "https://git.cern.ch/pub/davix.git", :tag => "R_0_3_6-2"
+  version "0.3.6-2"
+
   head "https://git.cern.ch/pub/davix.git"
 
   bottle do
     cellar :any
-    sha1 "7fd2d4e6dd0d2572c9bf00df6e63e0f23349684e" => :mavericks
-    sha1 "873460802e57043ba558741a0e04cb6b1ef61ec7" => :mountain_lion
-    sha1 "b17e9338f9f545dcb2a6c336fd03cdf9bf6cbdcb" => :lion
-  end
-
-  stable do
-    url "https://git.cern.ch/pub/davix.git", :tag => "R_0_3_1"
-    version "0.3.1"
+    sha1 "5cfd3f49de7034c40ec309a5a17514caf46e9e8e" => :yosemite
+    sha1 "525f241213630dfeaa3ec9d5ea019c8a0670b4dc" => :mavericks
+    sha1 "21befa078d3cdea7369e037999a9e5be24f3157d" => :mountain_lion
   end
 
   depends_on "cmake" => :build
   depends_on "doxygen" => :build
+  depends_on "openssl"
 
   def install
     ENV.libcxx

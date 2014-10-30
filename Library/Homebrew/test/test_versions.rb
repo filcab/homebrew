@@ -37,6 +37,7 @@ class VersionComparisonTests < Homebrew::TestCase
   def test_patchlevel
     assert_operator version('1.2.3-p34'), :>, version('1.2.3-p33')
     assert_operator version('1.2.3-p33'), :<, version('1.2.3-p34')
+    assert_operator version('1.2.3-p10'), :>, version('1.2.3-p9')
   end
 
   def test_HEAD
@@ -63,7 +64,9 @@ class VersionComparisonTests < Homebrew::TestCase
   end
 
   def test_comparison_returns_nil_for_non_version
-    assert_nil version('1.0') <=> 'foo'
+    v = version("1.0")
+    assert_nil v <=> Object.new
+    assert_raises(ArgumentError) { v > Object.new }
   end
 
   def test_compare_patchlevel_to_non_patchlevel
@@ -81,9 +84,8 @@ class VersionComparisonTests < Homebrew::TestCase
     v2 = version('0.1.0')
     v3 = version('0.1.1')
 
-    assert v1.eql?(v2)
-    assert v2.eql?(v1)
-    assert !v1.eql?(v3)
+    assert_eql v1, v2
+    refute_eql v1, v3
     assert_equal v1.hash, v2.hash
 
     h = { v1 => :foo }
@@ -96,6 +98,8 @@ class VersionParsingTests < Homebrew::TestCase
     d = HOMEBREW_CELLAR/'foo-0.1.9'
     d.mkpath
     assert_equal version('0.1.9'), d.version
+  ensure
+    d.unlink
   end
 
   def test_no_version

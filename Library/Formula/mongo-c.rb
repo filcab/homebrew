@@ -1,22 +1,24 @@
-require 'formula'
+require "formula"
 
 class MongoC < Formula
-  homepage 'http://docs.mongodb.org/ecosystem/drivers/c/'
-  url 'https://github.com/mongodb/mongo-c-driver/releases/download/0.96.2/mongo-c-driver-0.96.2.tar.gz'
-  sha1 '6a69db4d2e5e2fc68fd2959666802786111c9275'
+  homepage "http://docs.mongodb.org/ecosystem/drivers/c/"
+  url "https://github.com/mongodb/mongo-c-driver/releases/download/1.0.2/mongo-c-driver-1.0.2.tar.gz"
+  sha1 "baa425d64dddf5f8267beb0cef509df5b80e5abb"
 
   bottle do
     cellar :any
-    sha1 "4f02db86827e0f95979f027c2bb44c3fd19ae463" => :mavericks
-    sha1 "dcba37116e8d490fd616b2ce2ff926158003408e" => :mountain_lion
-    sha1 "4c546a1136fbb4ff3f669c87257bcbc1d34ea14a" => :lion
+    sha1 "d72b1c9554309ae5e3cfb1789d80f1e317f38d2d" => :yosemite
+    sha1 "aeb42a0cc056fd23a3122fcbcab211251fe4f8f1" => :mavericks
+    sha1 "d3ba4bf24c5a3fc195609ccd70cc65fc85d095dc" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'libbson'
+  depends_on "pkg-config" => :build
+  depends_on "libbson"
+  depends_on "openssl"
 
   def install
-    system "./configure", "--prefix=#{prefix}"
+    # --enable-sasl=no: https://jira.mongodb.org/browse/CDRIVER-447
+    system "./configure", "--prefix=#{prefix}", "--enable-sasl=no"
     system "make", "install"
   end
 end

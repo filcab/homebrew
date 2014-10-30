@@ -2,16 +2,23 @@ require "formula"
 
 class SwiProlog < Formula
   homepage "http://www.swi-prolog.org/"
-  url "http://www.swi-prolog.org/download/stable/src/pl-6.6.5.tar.gz"
-  sha1 "ae86b29f1b78a4c1530990a761fefb0c86ba57f2"
+  url "http://www.swi-prolog.org/download/stable/src/pl-6.6.6.tar.gz"
+  sha1 "38cc6772a48fd412f50fc06e24e6e4673eb71d3b"
+  revision 1
+
+  bottle do
+    sha1 "639b6093ff09bb6b066ff86705de2ddc78c37213" => :yosemite
+    sha1 "76f0f355cc1e16442ed3f474654924890da457dd" => :mavericks
+    sha1 "6917eab60b4e607311f0ee777dd70e31e624e7c1" => :mountain_lion
+  end
 
   devel do
-    url "http://www.swi-prolog.org/download/devel/src/pl-7.1.15.tar.gz"
-    sha1 "3e15af545f3d528b2ad7d9eac0b833fd86880dd8"
+    url "http://www.swi-prolog.org/download/devel/src/pl-7.1.25.tar.gz"
+    sha1 "c7912d9905de961426ffae3545f8d4a16f68c386"
   end
 
   head do
-    url "git://www.swi-prolog.org/home/pl/git/pl.git"
+    url "https://github.com/SWI-Prolog/swipl-devel.git"
 
     depends_on "autoconf" => :build
   end
@@ -20,12 +27,13 @@ class SwiProlog < Formula
   option "with-jpl", "Enable JPL (Java Prolog Bridge)"
   option "with-xpce", "Enable XPCE (Prolog Native GUI Library)"
 
+  depends_on "pkg-config" => :build
   depends_on "readline"
   depends_on "gmp"
+  depends_on "openssl"
   depends_on "libarchive" => :optional
 
   if build.with? "xpce"
-    depends_on "pkg-config" => :build
     depends_on :x11
     depends_on "jpeg"
   end

@@ -2,29 +2,23 @@ require 'formula'
 
 class Juju < Formula
   homepage 'https://juju.ubuntu.com'
-  url 'https://launchpad.net/juju-core/1.18/1.18.4/+download/juju-core_1.18.4.tar.gz'
-  sha1 '70ac905e113eedfa08ad8a8acab319b0c7c462cb'
-
-  devel do
-    url 'https://launchpad.net/juju-core/trunk/1.19.3/+download/juju-core_1.19.3.tar.gz'
-    sha1 '9ef0ce0d8398e4f0a1ef3888d1204bc54381b16f'
-  end
+  url 'https://launchpad.net/juju-core/1.20/1.20.11/+download/juju-core_1.20.11.tar.gz'
+  sha1 'ce76b26648533501ed9e1918abe740116d4de73b'
 
   bottle do
-    sha1 "426a5dadbd72c7d700e35b31103aaa431a226ef7" => :mavericks
-    sha1 "de572c1e63a7d2093761be983571e9f7ded6d761" => :mountain_lion
-    sha1 "e238eb414e934330fb54aa7793c37cfa22ca2c5f" => :lion
+    sha1 "b7c719dab5385cd52771527ab1f97de174445714" => :yosemite
+    sha1 "a7e0ec9697c5055f5bdeefbd76b2579462f949f9" => :mavericks
+    sha1 "5032c2e7415d000212b7298a92c84192454c4d9c" => :mountain_lion
   end
 
   depends_on 'go' => :build
 
   def install
-    ENV['GOPATH'] = buildpath
-    args = %w(install launchpad.net/juju-core/cmd/juju)
-    args.insert(1, "-v") if ARGV.verbose?
-    system "go", *args
-    bin.install 'bin/juju'
-    bash_completion.install "src/launchpad.net/juju-core/etc/bash_completion.d/juju-core"
+    ENV["GOPATH"] = buildpath
+    system "go", "build", "github.com/juju/juju/cmd/juju"
+    system "go", "build", "github.com/juju/juju/cmd/plugins/juju-metadata"
+    bin.install "juju", "juju-metadata"
+    bash_completion.install "src/github.com/juju/juju/etc/bash_completion.d/juju-core"
   end
 
   test do

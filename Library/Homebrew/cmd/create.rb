@@ -36,11 +36,11 @@ module Homebrew
       :autotools
     end
 
-    if fc.name.nil? or fc.name.to_s.strip.empty?
-      path = Pathname.new url
-      print "Formula name [#{path.stem}]: "
-      fc.name = __gets || path.stem
-      fc.path = Formula.path fc.name
+    if fc.name.nil? || fc.name.strip.empty?
+      stem = Pathname.new(url).stem
+      print "Formula name [#{stem}]: "
+      fc.name = __gets || stem
+      fc.path = Formula.path(fc.name)
     end
 
     # Don't allow blacklisted formula, or names that shadow aliases,
@@ -51,7 +51,7 @@ module Homebrew
       end
 
       if Formula.aliases.include? fc.name
-        realname = Formula.canonical_name fc.name
+        realname = Formulary.canonical_name(fc.name)
         raise <<-EOS.undent
           The formula #{realname} is already aliased to #{fc.name}
           Please check that you are not creating a duplicate.
@@ -119,7 +119,7 @@ class FormulaCreator
   def template; <<-EOS.undent
     require "formula"
 
-    # Documentation: https://github.com/Homebrew/homebrew/wiki/Formula-Cookbook
+    # Documentation: https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Formula-Cookbook.md
     #                #{HOMEBREW_CONTRIB}/example-formula.rb
     # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 

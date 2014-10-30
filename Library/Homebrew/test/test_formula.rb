@@ -58,7 +58,7 @@ class FormulaTests < Homebrew::TestCase
     prefix.mkpath
     assert_equal prefix, f.installed_prefix
   ensure
-    prefix.rmtree
+    f.rack.rmtree
   end
 
   def test_installed_prefix_devel_installed
@@ -73,7 +73,7 @@ class FormulaTests < Homebrew::TestCase
     prefix.mkpath
     assert_equal prefix, f.installed_prefix
   ensure
-    prefix.rmtree
+    f.rack.rmtree
   end
 
   def test_installed_prefix_stable_installed
@@ -88,10 +88,10 @@ class FormulaTests < Homebrew::TestCase
     prefix.mkpath
     assert_equal prefix, f.installed_prefix
   ensure
-    prefix.rmtree
+    f.rack.rmtree
   end
 
-  def test_installed_prefix_head_active_spec
+  def test_installed_prefix_head
     f = formula("test", Pathname.new(__FILE__).expand_path, :head) do
       head 'foo'
       devel do
@@ -103,7 +103,7 @@ class FormulaTests < Homebrew::TestCase
     assert_equal prefix, f.installed_prefix
   end
 
-  def test_installed_prefix_devel_active_spec
+  def test_installed_prefix_devel
     f = formula("test", Pathname.new(__FILE__).expand_path, :devel) do
       head 'foo'
       devel do
@@ -119,9 +119,7 @@ class FormulaTests < Homebrew::TestCase
     x = TestBall.new
     y = TestBall.new
     assert_equal x, y
-    assert_equal y, x
-    assert x.eql?(y)
-    assert y.eql?(x)
+    assert_eql x, y
     assert_equal x.hash, y.hash
   end
 
@@ -129,14 +127,16 @@ class FormulaTests < Homebrew::TestCase
     x = TestBall.new("foo")
     y = TestBall.new("bar")
     refute_equal x, y
-    refute_equal y, x
+    refute_eql x, y
     refute_equal x.hash, y.hash
-    assert !x.eql?(y)
-    assert !y.eql?(x)
   end
 
   def test_comparison_with_non_formula_objects_does_not_raise
     refute_equal TestBall.new, Object.new
+  end
+
+  def test_sort_operator
+    assert_nil TestBall.new <=> Object.new
   end
 
   def test_class_naming
@@ -171,7 +171,7 @@ class FormulaTests < Homebrew::TestCase
 
     assert_equal 'http://example.com', f.homepage
     assert_version_equal '0.1', f.version
-    assert_equal f.stable, f.active_spec
+    assert_predicate f, :stable?
 
     assert_instance_of SoftwareSpec, f.stable
     assert_instance_of SoftwareSpec, f.devel
@@ -195,7 +195,7 @@ class FormulaTests < Homebrew::TestCase
         end
       }
     end
-    assert_kind_of Formula, Formula.factory(name)
+    assert_kind_of Formula, Formulary.factory(name)
   ensure
     path.unlink
   end
@@ -247,5 +247,31 @@ class FormulaTests < Homebrew::TestCase
     end
 
     assert_equal PkgVersion.parse('HEAD'), f.pkg_version
+  end
+
+  def test_raises_when_non_formula_constant_exists
+    const = :SomeConst
+    Object.const_set(const, Module.new)
+    begin
+      assert_raises(FormulaUnavailableError) { Formulary.factory("some_const") }
+    ensure
+      Object.send(:remove_const, const)
+    end
+  end
+
+  def test_legacy_options
+    f = formula do
+      url "foo-1.0"
+
+      def options
+        [["--foo", "desc"], ["--bar", "desc"]]
+      end
+
+      option "baz"
+    end
+
+    assert f.option_defined?("foo")
+    assert f.option_defined?("bar")
+    assert f.option_defined?("baz")
   end
 end

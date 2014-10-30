@@ -7,9 +7,10 @@ class Libstxxl < Formula
 
   bottle do
     cellar :any
-    sha1 "9e7afd9ad01aa912c87307ce63210003e7fdf623" => :mavericks
-    sha1 "65a63d585bef89bba5e4c6bd2bb442ab7edc670c" => :mountain_lion
-    sha1 "1495540f15c76bd22fb71a4767f84fc1786aa360" => :lion
+    revision 2
+    sha1 "7ce7a89ba656cd26a64ffedcaeda2f35c06ef01a" => :yosemite
+    sha1 "6a2ee5d2a7b32c1195e7aa0f48630cbb66f10adf" => :mavericks
+    sha1 "3275c9447279ebbcbdceda59fd7ad3d99fc7afbb" => :mountain_lion
   end
 
   depends_on 'cmake' => :build
@@ -62,8 +63,10 @@ class Libstxxl < Formula
   end
 
   def install
+    args = std_cmake_args - %w{-DCMAKE_BUILD_TYPE=None}
+    args << "-DCMAKE_BUILD_TYPE=Release"
     mkdir "build" do
-      system "cmake", "..", *std_cmake_args
+      system "cmake", "..", *args
       system 'make install'
     end
   end

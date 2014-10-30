@@ -4,17 +4,17 @@ class Ghostscript < Formula
   homepage 'http://www.ghostscript.com/'
 
   stable do
-    url 'http://downloads.ghostscript.com/public/ghostscript-9.14.tar.gz'
-    sha1 '85001be316ebc11a6060ae7e208fe08dcbfd70ae'
+    url 'http://downloads.ghostscript.com/public/ghostscript-9.15.tar.gz'
+    sha1 'f53bcc47e912c7bffc2ced62ed9311376fb18bab'
 
     patch :DATA # Uncomment OS X-specific make vars
   end
 
   bottle do
-    revision 1
-    sha1 "308a8f34a919cf8b7aaa919b74aa3bc7606cf24f" => :mavericks
-    sha1 "db1b4c91a40cedba2386ced95bd63f9bcb832efa" => :mountain_lion
-    sha1 "b63f8d414e7e07ac554c5869385e7cb657c3a26a" => :lion
+    revision 3
+    sha1 "64527567402bb0e06bd3cd2bd1999d3bd3ea09ad" => :yosemite
+    sha1 "bd885778fee5126a4f2b7bc27ea70e312668c430" => :mavericks
+    sha1 "41d1130888b464aa27cf46ae4266a517d17d64cb" => :mountain_lion
   end
 
   head do
@@ -57,8 +57,8 @@ class Ghostscript < Formula
 
   # http://djvu.sourceforge.net/gsdjvu.html
   resource 'djvu' do
-    url 'https://downloads.sourceforge.net/project/djvu/GSDjVu/1.5/gsdjvu-1.5.tar.gz'
-    sha1 'c7d0677dae5fe644cf3d714c04b3c2c343906342'
+    url 'https://downloads.sourceforge.net/project/djvu/GSDjVu/1.6/gsdjvu-1.6.tar.gz'
+    sha1 'a8c5520d698d8be558a1957b4e5108cba68822ef'
   end
 
   def move_included_source_copies
@@ -73,8 +73,8 @@ class Ghostscript < Formula
     src_dir = build.head? ? "gs" : "."
 
     resource('djvu').stage do
-      inreplace 'gdevdjvu.c', /#include "gserror.h"/, ''
-      (buildpath+'base').install 'gdevdjvu.c'
+      inreplace 'gsdjvu.mak', '$(GL', '$(DEV'
+      (buildpath+'devices').install 'gdevdjvu.c'
       (buildpath+'lib').install 'ps2utf8.ps'
       ENV['EXTRA_INIT_FILES'] = 'ps2utf8.ps'
       (buildpath/'devices/contrib.mak').open('a') { |f| f.write(File.read('gsdjvu.mak')) }

@@ -2,9 +2,16 @@ require 'formula'
 
 class GstLibav < Formula
   homepage 'http://gstreamer.freedesktop.org'
-  url 'http://gstreamer.freedesktop.org/src/gst-libav/gst-libav-1.2.4.tar.xz'
-  mirror 'http://ftp.osuosl.org/pub/blfs/svn/g/gst-libav-1.2.4.tar.xz'
-  sha256 '2a69480d63fc2db93249d9e2e229ab3541bbc2db881b0f64de13d0bfc7d1f037'
+  url 'http://gstreamer.freedesktop.org/src/gst-libav/gst-libav-1.4.3.tar.xz'
+  mirror 'http://ftp.osuosl.org/pub/blfs/svn/g/gst-libav-1.4.3.tar.xz'
+  sha256 '833229d2b1aad6549ad0297435516508cc3ac47b166d6393ecdffc34c31a01d3'
+
+  bottle do
+    revision 1
+    sha1 "9514efedab2cd85c4d60e3b4f5d476875a4e5a00" => :yosemite
+    sha1 "d3453277643884a602ec17d238ffc340a226dbd4" => :mavericks
+    sha1 "0dee620b9b88c01181a42f8e4915c5a86be4a274" => :mountain_lion
+  end
 
   head do
     url 'git://anongit.freedesktop.org/gstreamer/gst-libav'
@@ -36,6 +43,6 @@ class GstLibav < Formula
   end
 
   test do
-    system Formula["gstreamer"].opt_prefix/"bin/gst-inspect-1.0", "libav"
+    system "#{Formula["gstreamer"].opt_bin}/gst-inspect-1.0", "libav"
   end
 end
