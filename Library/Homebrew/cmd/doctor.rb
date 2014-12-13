@@ -1,6 +1,7 @@
 require "cmd/missing"
 require "formula"
 require "keg"
+require "language/python"
 require "version"
 
 class Volumes
@@ -62,7 +63,7 @@ class Checks
   end
 
   # Git will always be on PATH because of the wrapper script in
-  # Library/Contributions/cmd, so we check if there is a *real*
+  # Library/ENV/scm, so we check if there is a *real*
   # git here to avoid multiple warnings.
   def git?
     return @git if instance_variable_defined?(:@git)
@@ -123,6 +124,7 @@ def check_for_stray_dylibs
     "libmacfuse_i64.2.dylib", # OSXFuse MacFuse compatibility layer
     "libosxfuse_i32.2.dylib", # OSXFuse
     "libosxfuse_i64.2.dylib", # OSXFuse
+    "libTrAPI.dylib", # TrAPI / Endpoint Security VPN
   ]
 
   __check_stray_files "/usr/local/lib", "*.dylib", white_list, <<-EOS.undent
@@ -433,6 +435,19 @@ end
   end
 end
 
+def check_access_site_packages
+  if Language::Python.homebrew_site_packages.exist? && !Language::Python.homebrew_site_packages.writable_real?
+    <<-EOS.undent
+      #{Language::Python.homebrew_site_packages} isn't writable.
+      This can happen if you "sudo pip install" software that isn't managed
+      by Homebrew. If you install a formula with Python modules, the install
+      will fail during the link step.
+
+      You should probably `chown` #{Language::Python.homebrew_site_packages}
+    EOS
+  end
+end
+
 def check_access_logs
   if HOMEBREW_LOGS.exist? and not HOMEBREW_LOGS.writable_real?
     <<-EOS.undent
@@ -665,9 +680,10 @@ def check_for_config_scripts
   ].map(&:downcase)
 
   paths.each do |p|
-    next if whitelist.include?(p.downcase) ||
-      p.start_with?(real_cellar.to_s, HOMEBREW_CELLAR.to_s) ||
-      !File.directory?(p)
+    next if whitelist.include?(p.downcase) || !File.directory?(p)
+
+    realpath = Pathname.new(p).realpath.to_s
+    next if realpath.start_with?(real_cellar.to_s, HOMEBREW_CELLAR.to_s)
 
     scripts += Dir.chdir(p) { Dir["*-config"] }.map { |c| File.join(p, c) }
   end
@@ -1041,7 +1057,7 @@ def check_for_non_prefixed_coreutils
 end
 
 def check_for_non_prefixed_findutils
-  default_names = Tab.for_name('findutils').include? 'default-names'
+  default_names = Tab.for_name('findutils').with? "default-names"
   if default_names then <<-EOS.undent
     Putting non-prefixed findutils in your path can cause python builds to fail.
     EOS
@@ -1147,6 +1163,43 @@ end
     end
   end
 
+  def check_for_pth_support
+    homebrew_site_packages = Language::Python.homebrew_site_packages
+    return unless homebrew_site_packages.directory?
+    return if Language::Python.reads_brewed_pth_files?("python") != false
+    return unless Language::Python.in_sys_path?("python", homebrew_site_packages)
+    user_site_packages = Language::Python.user_site_packages "python"
+    <<-EOS.undent
+      Your default Python does not recognize the Homebrew site-packages
+      directory as a special site-packages directory, which means that .pth
+      files will not be followed. This means you will not be able to import
+      some modules after installing them with Homebrew, like wxpython. To fix
+      this for the current user, you can run:
+
+        mkdir -p #{user_site_packages}
+        echo 'import site; site.addsitedir("#{homebrew_site_packages}")' >> #{user_site_packages}/homebrew.pth
+    EOS
+  end
+
+  def check_for_external_cmd_name_conflict
+    cmds = paths.map { |p| Dir["#{p}/brew-*"] }.flatten.uniq
+    cmds = cmds.select { |cmd| File.file?(cmd) && File.executable?(cmd) }
+    cmd_map = {}
+    cmds.each do |cmd|
+      cmd_name = File.basename(cmd, ".rb")
+      cmd_map[cmd_name] ||= []
+      cmd_map[cmd_name] << cmd
+    end
+    cmd_map.reject! { |cmd_name, cmd_paths| cmd_paths.size == 1 }
+    return if cmd_map.empty?
+    s = "You have external commands with conflicting names."
+    cmd_map.each do |cmd_name, cmd_paths|
+      s += "\n\nFound command `#{cmd_name}` in following places:\n"
+      s += cmd_paths.map { |f| "  #{f}" }.join("\n")
+    end
+    s
+  end
+
   def all
     methods.map(&:to_s).grep(/^check_/)
   end
@@ -1173,7 +1226,13 @@ module Homebrew
 
     first_warning = true
     methods.each do |method|
-      out = checks.send(method)
+      begin
+        out = checks.send(method)
+      rescue NoMethodError
+        Homebrew.failed = true
+        puts "No check available by the name: #{method}"
+        next
+      end
       unless out.nil? or out.empty?
         if first_warning
           puts <<-EOS.undent

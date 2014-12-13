@@ -7,9 +7,10 @@ class Pypy3 < Formula
 
   bottle do
     cellar :any
-    sha1 "91c1ccc5028d0e624f305897774acef91aa90553" => :yosemite
-    sha1 "70dc2d4a2777e4fca94b7eb7a725c3c0b67063ea" => :mavericks
-    sha1 "2712e981287725a7282811b7eb35b14e866ad960" => :mountain_lion
+    revision 1
+    sha1 "6fb9f4ff0ee77a9455505eacfb668ba63808e8f0" => :yosemite
+    sha1 "440dae2582e906c69da54a790c8904b6786b23e6" => :mavericks
+    sha1 "a8b2fdd246ccda13606f6b645013323882272356" => :mountain_lion
   end
 
   depends_on :arch => :x86_64
@@ -58,6 +59,12 @@ class Pypy3 < Formula
   end
 
   def post_install
+    # Precompile cffi extensions in lib_pypy
+    # list from create_cffi_import_libraries in pypy/tool/release/package.py
+    %w[_sqlite3 _curses syslog gdbm _tkinter].each do |module_name|
+      quiet_system bin/"pypy3", "-c", "import #{module_name}"
+    end
+
     # Post-install, fix up the site-packages and install-scripts folders
     # so that user-installed Python software survives minor updates, such
     # as going from 1.7.0 to 1.7.1.
@@ -102,7 +109,7 @@ class Pypy3 < Formula
     To update setuptools and pip between pypy3 releases, run:
         #{scripts_folder}/pip install --upgrade setuptools pip
 
-    See: https://github.com/Homebrew/homebrew/wiki/Homebrew-and-Python
+    See: https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Homebrew-and-Python.md
     EOS
   end
 
