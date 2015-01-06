@@ -41,7 +41,6 @@ class Gnuplot < Formula
 
   depends_on 'pkg-config' => :build
   depends_on LuaRequirement unless build.include? 'nolua'
-  depends_on 'readline'
   depends_on "libpng"
   depends_on "jpeg"
   depends_on "libtiff"
@@ -76,7 +75,6 @@ class Gnuplot < Formula
     end
 
     # Help configure find libraries
-    readline = Formula["readline"].opt_prefix
     pdflib = Formula["pdflib-lite"].opt_prefix
     gd = Formula["gd"].opt_prefix
 
@@ -84,7 +82,6 @@ class Gnuplot < Formula
       --disable-dependency-tracking
       --disable-silent-rules
       --prefix=#{prefix}
-      --with-readline=#{readline}
     ]
 
     args << "--with-pdf=#{pdflib}" if build.include? 'pdf'
