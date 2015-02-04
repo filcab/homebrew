@@ -31,7 +31,7 @@ class Ninja < Formula
     end
 
     bin.install "ninja"
-    bash_completion.install 'misc/bash-completion' => 'ninja-completion.sh'
-    zsh_completion.install 'misc/zsh-completion' => '_ninja'
+    bash_completion.install "misc/bash-completion" => "ninja-completion.sh"
+    zsh_completion.install "misc/zsh-completion" => "_ninja"
   end
 end
