@@ -12,7 +12,8 @@ class Libssh < Formula
   end
 
   depends_on "cmake" => :build
-  depends_on "openssl"
+  depends_on "ninja" => :build
+  #depends_on "openssl"
 
   # Fix compilation on 10.10
   # https://red.libssh.org/issues/164
@@ -21,8 +22,8 @@ class Libssh < Formula
 
   def install
     mkdir "build" do
-      system "cmake", "..", *std_cmake_args
-      system "make", "install"
+      system "cmake", "-G", "Ninja", "..", *std_cmake_args
+      system "ninja", "install"
     end
   end
 end

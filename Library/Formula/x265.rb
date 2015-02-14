@@ -16,6 +16,7 @@ class X265 < Formula
 
   depends_on 'yasm' => :build
   depends_on 'cmake' => :build
+  depends_on 'ninja' => :build
   depends_on :macos => :lion
 
   option '16-bit', 'Build a 16-bit x265 (default: 8-bit)'
@@ -23,12 +24,13 @@ class X265 < Formula
   def install
 
     args = std_cmake_args
+    args << '-G' << 'Ninja'
     args.delete '-DCMAKE_BUILD_TYPE=None'
     args << '-DCMAKE_BUILD_TYPE=Release'
     args << '-DHIGH_BIT_DEPTH=ON' if build.include? '16-bit'
 
     system "cmake", "source",  *args
-    system "make", "install"
+    system "ninja", "install"
   end
 
   test do
