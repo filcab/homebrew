@@ -35,7 +35,7 @@ class Ffmpeg < Formula
   depends_on "pkg-config" => :build
 
   # manpages won't be built without texi2html
-  depends_on "texi2html" => :build if MacOS.version >= :mountain_lion
+  #depends_on "texi2html" => :build if MacOS.version >= :mountain_lion
   depends_on "yasm" => :build
 
   depends_on "x264" => :recommended
@@ -65,7 +65,7 @@ class Ffmpeg < Formula
   depends_on "libquvi" => :optional
   depends_on "libvidstab" => :optional
   depends_on "x265" => :optional
-  depends_on "openssl" => :optional
+  #depends_on "openssl" => :optional
   depends_on "libssh" => :optional
   depends_on "webp" => :optional
 

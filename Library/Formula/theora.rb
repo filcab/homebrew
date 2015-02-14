@@ -14,7 +14,7 @@ class Theora < Formula
   end
 
   depends_on "pkg-config" => :build
-  depends_on "libtool" => :build
+  #depends_on "libtool" => :build
   depends_on "libogg"
   depends_on "libvorbis"
 
