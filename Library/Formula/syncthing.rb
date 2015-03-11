@@ -1,11 +1,14 @@
 class Syncthing < Formula
   homepage "http://syncthing.net"
-  url "https://github.com/syncthing/syncthing.git", :tag => "v0.10.22"
+  url "https://github.com/syncthing/syncthing.git",
+    :tag => "v0.10.25", :revision => "e22c873ec4a65cabf1df5b09c343cbf4ea2325aa"
+
+  head "https://github.com/syncthing/syncthing.git"
 
   bottle do
-    sha1 "beef7f4d6477edbe240e7f01dd4367609ed327f9" => :yosemite
-    sha1 "b4aa768e09083fb6032f55ab9e2b9b8b3c70dad8" => :mavericks
-    sha1 "0103311b2e52378d7647f330ff6c7fb5c4c7c775" => :mountain_lion
+    sha256 "41e77b56738159536e55a9cbacfd4a9e170f9fc236947ea7f7b9907df0e95ac2" => :yosemite
+    sha256 "0fbb7328362a659ff0031ef00a643b8e0b53c673d306daaad9f9fdad3402b278" => :mavericks
+    sha256 "64965ffa1e76f5a5ff309b3d9a906ddd6fe5553d4f4dfcac50d0543c21b3479d" => :mountain_lion
   end
 
   depends_on "go" => :build
@@ -20,7 +23,6 @@ class Syncthing < Formula
     rm_rf  hack_dir
     mkdir_p hack_dir
     ln_s cached_download, "#{hack_dir}/syncthing"
-    ENV["GIT_DIR"] = cached_download/".git"
 
     system "./build.sh", "noupgrade"
     bin.install "syncthing"
@@ -51,6 +53,6 @@ class Syncthing < Formula
   end
 
   test do
-    system "#{bin}/syncthing", "-generate", "./"
+    system bin/"syncthing", "-generate", "./"
   end
 end
