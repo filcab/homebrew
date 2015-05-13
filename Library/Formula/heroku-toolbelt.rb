@@ -1,7 +1,10 @@
 class HerokuToolbelt < Formula
   homepage "https://toolbelt.heroku.com/other"
-  url "https://s3.amazonaws.com/assets.heroku.com/heroku-client/heroku-client-3.30.3.tgz"
-  sha256 "2efc28e0af3e9e03ef98ba3530d0b5346a8221989c9e01e78d9944ea35013455"
+  url "https://s3.amazonaws.com/assets.heroku.com/heroku-client/heroku-client-3.31.2.tgz"
+  sha256 "8e859fc1f95508ddfb4684f752ced4c2876aa94839830619ec659f83d72050fd"
+  head "https://github.com/heroku/heroku.git"
+
+  depends_on :ruby => "1.9"
 
   def install
     libexec.install Dir["*"]
