@@ -1,15 +1,15 @@
 require "language/go"
 
 class Gauge < Formula
-  homepage "https://getgauge.io"
-  url "https://github.com/getgauge/gauge/archive/v0.1.0.tar.gz"
-  sha1 "2abd107530d4a4295fe6ccf5699f3188ce1f7a99"
+homepage "http://getgauge.io"
+  url "https://github.com/getgauge/gauge/archive/v0.1.3.tar.gz"
+  sha1 "e57e7e41006cc56999757c9b7e4f41770b912d96"
 
   bottle do
     cellar :any
-    sha256 "56af2c22c6c1af59eae5074adb03b3555ba733e4055be3fab9eb0c33918df19b" => :yosemite
-    sha256 "a7515a31f05fe874671a45b1510e8b06335df2c172b06f342f2884bfd448a3ac" => :mavericks
-    sha256 "b7e199c79ec61e4a039fa9eb839c6c753cb1a44f4c84d7c12a603c99c2d7fb93" => :mountain_lion
+    sha256 "26944fa402a063917c7278d28752512b8735eab62678933b44fbe290426bca47" => :yosemite
+    sha256 "e23a370369f7a647d84c2ad0889180a051d3757924c74f4a834e4b07ca71dff4" => :mavericks
+    sha256 "624cd5274c709149fa26d5bdd6224836e229c2d0b900ee49687b5ae5e6a492cd" => :mountain_lion
   end
 
   depends_on "go" => :build
@@ -54,6 +54,12 @@ class Gauge < Formula
   go_resource "github.com/wsxiaoys/terminal" do
     url "https://github.com/wsxiaoys/terminal.git",
         :revision => "9dcaf1d63119a8ac00eef82270eaef08b6aa2328"
+  end
+
+  go_resource "gopkg.in/fsnotify.v1" do
+    url "https://gopkg.in/fsnotify.v1",
+        :revision => "96c060f6a6b7e0d6f75fddd10efeaca3e5d1bcb0",
+        :using => :git
   end
 
   def install
