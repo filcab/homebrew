@@ -11,8 +11,6 @@ class Nmap < Formula
     sha256 "73c5cc0e510d834016a13bc37013454805435db55575af53eb49d23d27a8756a" => :mountain_lion
   end
 
-  #depends_on "openssl"
-
   conflicts_with 'ndiff', :because => 'both install `ndiff` binaries'
 
   fails_with :llvm do
@@ -22,7 +20,6 @@ class Nmap < Formula
   def install
     ENV.deparallelize
 
-      #--with-openssl=#{Formula["openssl"].prefix}
     args = %W[
       --prefix=#{prefix}
       --with-libpcre=included
