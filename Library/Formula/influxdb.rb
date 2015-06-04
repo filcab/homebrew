@@ -15,9 +15,9 @@ class Influxdb < Formula
   end
 
   devel do
-    url "https://github.com/influxdb/influxdb/archive/v0.9.0-rc29.tar.gz"
-    sha1 "5fcb7194ed7134d3481b51616f7dd80c255f3e06"
-    version "0.9.0-rc29"
+    url "https://github.com/influxdb/influxdb/archive/v0.9.0-rc31.tar.gz"
+    sha1 "f7f4768cd155f308fa68d0773eb0517625e038d1"
+    version "0.9.0-rc31"
   end
 
   depends_on "go" => :build
@@ -97,8 +97,7 @@ class Influxdb < Formula
       Language::Go.stage_deps resources, buildpath/"src"
 
       cd influxdb_path do
-        system "go", "build", "-ldflags", "-X main.version 0.9.0-rc29 -X main.commit b8cf01dd4a140a6d777d005add703e4838663319", "./..."
-        system "go", "install", "./..."
+        system "go", "install", "-ldflags", "-X main.version 0.9.0-rc31 -X main.commit 8ade485b5865e642b128a7cc6eb20c9da73d1b48", "./..."
       end
 
       inreplace influxdb_path/"etc/config.sample.toml" do |s|
@@ -167,7 +166,8 @@ class Influxdb < Formula
           <key>ProgramArguments</key>
           <array>
             <string>#{opt_bin}/influxd</string>
-            <string>-config #{HOMEBREW_PREFIX}/etc/influxdb.conf</string>
+            <string>-config</string>
+            <string>#{HOMEBREW_PREFIX}/etc/influxdb.conf</string>
           </array>
           <key>RunAtLoad</key>
           <true/>

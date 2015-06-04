@@ -3,40 +3,41 @@ require "language/go"
 class Mongodb < Formula
   homepage "https://www.mongodb.org/"
 
-  depends_on "go" => :build
   stable do
-    url "https://fastdl.mongodb.org/src/mongodb-src-r3.0.2.tar.gz"
-    sha256 "010522203cdb9bbff52fbd9fe299b67686bb1256e2e55eb78abf35444f668399"
+    url "https://fastdl.mongodb.org/src/mongodb-src-r3.0.3.tar.gz"
+    sha256 "57765a81c18a0bb674fbe63bc507111d8795596eb9c9492028903985b4720807"
+
     go_resource "github.com/mongodb/mongo-tools" do
       url "https://github.com/mongodb/mongo-tools.git",
-        :tag => "r3.0.2",
-        :revision => "a914adfcea7d76f07512415eec5cd8308e67318e"
+        :tag => "r3.0.3",
+        :revision => "13a7eac12d16edd41fa875df759b16e4b027db7f"
     end
   end
 
   devel do
-    url "https://fastdl.mongodb.org/src/mongodb-src-r3.1.2.tar.gz"
-    sha256 "ed49023f81242ae0daadaffcf366da6d748dc638826604e2a7150764618fad85"
+    url "https://fastdl.mongodb.org/src/mongodb-src-r3.1.3.tar.gz"
+    sha256 "edd3c7eabac765d4bf47efd38e22b3fc6271a77559f8173c5da9c38a43ec05df"
+
     go_resource "github.com/mongodb/mongo-tools" do
       url "https://github.com/mongodb/mongo-tools.git",
-        :tag => "r3.1.2",
-        :revision => "546c61eee0904fb60d4afef276b9476218053015"
+        :tag => "r3.1.3",
+        :revision => "9aa74bcbecc3bd4d995dd14281e84ad33c119c70"
     end
   end
 
   bottle do
     cellar :any
-    revision 2
-    sha256 "25a97aa9a4b9d535120216b3960e0d34b75f86134c8f71127484140139f40fe7" => :yosemite
-    sha256 "de5f3e5be894da1c8884ab0ebb827890d3bb4c228066cb6ec2f22d993869bf21" => :mavericks
-    sha256 "6b565e5ba85d7deb8461dfcc34c4e5c07532a72f55d7c76af5b74fec84a153f1" => :mountain_lion
+    revision 1
+    sha256 "f89334dc463941c478c36a82d527d09699a8957490b4fc9f66ec7ea49b1a70a3" => :yosemite
+    sha256 "4772b547e272c087da3a3fc9a60350b4ce208187f830fdbbc91e6829508c04b3" => :mavericks
+    sha256 "e6d995c3124effee093ccf6afaf0d0f5fbda3b76c37040174d3373a7f7ba91a8" => :mountain_lion
   end
 
   option "with-boost", "Compile using installed boost, not the version shipped with mongodb"
 
   depends_on "boost" => :optional
   depends_on "go" => :build
-  depends_on :macos => :snow_leopard
+  depends_on :macos => :mountain_lion
   depends_on "scons" => :build
   depends_on "openssl" => :optional
 
@@ -48,14 +49,15 @@ class Mongodb < Formula
     Language::Go.stage_deps resources, buildpath/"src"
 
     cd "src/github.com/mongodb/mongo-tools" do
+      # https://github.com/Homebrew/homebrew/issues/40136
+      inreplace "build.sh", '-ldflags "-X github.com/mongodb/mongo-tools/common/options.Gitspec `git rev-parse HEAD`"', ""
+
       args = %W[]
-      # Once https://github.com/mongodb/mongo-tools/issues/11 is fixed, also set CPATH.
-      # For now, use default include path
-      #
+
       if build.with? "openssl"
         args << "ssl"
         ENV["LIBRARY_PATH"] = "#{Formula["openssl"].opt_prefix}/lib"
-        # ENV["CPATH"] = "#{Formula["openssl"].opt_prefix}/include"
+        ENV["CPATH"] = "#{Formula["openssl"].opt_prefix}/include"
       end
       system "./build.sh", *args
     end

@@ -119,8 +119,7 @@ end
 
 **We don’t accept formulae without homepages!**
 
-Homebrew doesn’t have a description field because the homepage is always up to date, and Homebrew is not. That’s way less maintenance for us. Try `brew home qt`.
-
+Homebrew now has a description field (`desc`). Try and summarize this from the homepage.
 
 ## Check the build system
 
@@ -343,6 +342,8 @@ Add aliases by creating symlinks in `Library/Aliases`.
 
 You can run `brew audit` to test formulae for adherence to Homebrew house style. This includes warnings for trailing whitespace, preferred URLs for certain source hosts, and a lot of other style issues. Fixing these warnings before committing will make the process a lot smoother for us.
 
+Use `brew info` and check if the version guessed by Homebrew from the URL is
+correct. Add an explicit `version` if not.
 
 ## Commit
 
