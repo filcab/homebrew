@@ -1,6 +1,6 @@
 # Reference: https://github.com/macvim-dev/macvim/wiki/building
 class Macvim < Formula
-  homepage 'https://code.google.com/p/macvim/'
+  homepage 'https://github.com/macvim-dev/macvim'
   url 'https://github.com/macvim-dev/macvim/archive/Snapshot-76.tar.gz'
   version '7.4-76'
   sha1 'bced599503faa65c146394eb951d7a43b49510a4'
