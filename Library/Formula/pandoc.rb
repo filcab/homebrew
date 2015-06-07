@@ -3,16 +3,17 @@ require "language/haskell"
 class Pandoc < Formula
   include Language::Haskell::Cabal
 
+  desc "Swiss-army knife of markup format conversion"
   homepage "http://pandoc.org"
-  url "https://hackage.haskell.org/package/pandoc-1.14.0.2/pandoc-1.14.0.2.tar.gz"
-  sha256 "5d60bddc474499a2aa553e200da2860fed9e48a3db77072355f5f7c666a56bd0"
+  url "https://hackage.haskell.org/package/pandoc-1.14.0.4/pandoc-1.14.0.4.tar.gz"
+  sha256 "01955bfb1f397ec22bbce10e2df7b4f2214b7289bf79bf51eb7ae0e3b427fadf"
 
   head "https://github.com/jgm/pandoc.git"
 
   bottle do
-    sha256 "dda5a71f09d869a7c46bf6b2af39a05e79633f125b564fa431109c198832eab2" => :yosemite
-    sha256 "f99e53a35876f07687bcf81e10894a482510f735aa54d2b303edce2c8f170aea" => :mavericks
-    sha256 "d4edcf75c228b95e96117731bee0a75158f143ea7f604aeb2d38ff5fbd218297" => :mountain_lion
+    sha256 "ea4d6ae77530e0e96bb43b3eec4d543ef21bfc978773309baace41943ec855f6" => :yosemite
+    sha256 "afab4a524ad89a4c86b0008a979c6a2e62253f23e5ea02642a4b3f215615fbb9" => :mavericks
+    sha256 "1bc7ed1e7aa4394f213d51e1fe34d9aceba2041d9fedc40a743736c02dd3c539" => :mountain_lion
   end
 
   depends_on "ghc" => :build
