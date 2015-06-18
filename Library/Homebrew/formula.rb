@@ -463,6 +463,7 @@ class Formula
   def opt_libexec; opt_prefix+'libexec' end
   def opt_sbin;    opt_prefix+'sbin'    end
   def opt_share;   opt_prefix+'share'   end
+  def opt_frameworks; opt_prefix+'Frameworks' end
 
   # Can be overridden to selectively disable bottles from formulae.
   # Defaults to true so overridden version does not have to check if bottles
@@ -616,7 +617,7 @@ class Formula
   def python(options={}, &block)
     opoo 'Formula#python is deprecated and will go away shortly.'
     block.call if block_given?
-    PythonDependency.new
+    PythonRequirement.new
   end
   alias_method :python2, :python
   alias_method :python3, :python
