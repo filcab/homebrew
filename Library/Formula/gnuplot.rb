@@ -42,7 +42,6 @@ class Gnuplot < Formula
   depends_on "gd" => :recommended
   depends_on "lua" => :recommended
   depends_on "jpeg"
-  depends_on "libpng"
   depends_on "libtiff"
   depends_on "readline"
   depends_on "pango" if (build.with? "cairo") || (build.with? "wxmac")
