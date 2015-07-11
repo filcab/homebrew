@@ -10,14 +10,13 @@ class Pv < Formula
     sha256 "f343368e557cb1c86173bd0c62143b34834e2b825b1a188ac2a37c23d0c685dd" => :mountain_lion
   end
 
-  depends_on "gettext"
-
   fails_with :llvm do
     build 2334
   end
 
   def install
     system "./configure", "--disable-debug",
+                          "--disable-gettext",
                           "--prefix=#{prefix}",
                           "--mandir=#{man}"
     system "make", "install"
