@@ -184,7 +184,7 @@ class FormulaAuditor
       [lineno, name]
     end.compact.each_cons(2) do |c1, c2|
       unless c1[0] < c2[0]
-        problem "`#{c1[1]}`(line #{c1[0]}) should be put before `#{c2[1]}`(line #{c2[0]})"
+        problem "`#{c1[1]}` (line #{c1[0]}) should be put before `#{c2[1]}` (line #{c2[0]})"
       end
     end
   end
@@ -354,7 +354,10 @@ class FormulaAuditor
     # Make sure the formula name plus description is no longer than 80 characters
     linelength = formula.full_name.length + ": ".length + desc.length
     if linelength > 80
-      problem "Description is too long. \"name: desc\" should be less than 80 characters (currently #{linelength})."
+      problem <<-EOS.undent
+        Description is too long. \"name: desc\" should be less than 80 characters.
+        Length is calculated as #{formula.full_name} + desc. (currently #{linelength})
+      EOS
     end
 
     if desc =~ %r[[Cc]ommandline]
@@ -428,6 +431,13 @@ class FormulaAuditor
          %r[^http://code\.google\.com/]
       problem "Please use https:// for #{homepage}"
     end
+
+    return unless @online
+    begin
+      nostdout { curl "--connect-timeout", "15", "-IL", "-o", "/dev/null", homepage }
+    rescue ErrorDuringExecution
+      problem "The homepage is not reachable (curl exit code #{$?.exitstatus})"
+    end
   end
 
   def audit_github_repository
@@ -458,11 +468,11 @@ class FormulaAuditor
   end
 
   def audit_specs
-    if head_only?(formula) && formula.tap.to_s.downcase != "homebrew/homebrew-head-only"
+    if head_only?(formula) && formula.tap.to_s.downcase !~ /-head-only$/
       problem "Head-only (no stable download)"
     end
 
-    if devel_only?(formula) && formula.tap.to_s.downcase != "homebrew/homebrew-devel-only"
+    if devel_only?(formula) && formula.tap.to_s.downcase !~ /-devel-only$/
       problem "Devel-only (no stable download)"
     end
 
@@ -509,7 +519,8 @@ class FormulaAuditor
     end
   end
 
-  def audit_patches
+  def audit_legacy_patches
+    return unless formula.respond_to?(:patches)
     legacy_patches = Patch.normalize_legacy_patches(formula.patches).grep(LegacyPatch)
     if legacy_patches.any?
       problem "Use the patch DSL instead of defining a 'patches' method"
@@ -784,6 +795,10 @@ class FormulaAuditor
       problem "Use the `#{method}` Ruby method instead of `system #{system}`"
     end
 
+    if line =~ /assert .*\.include?/
+      problem "Use `assert_match` instead of `assert ...include?`"
+    end
+
     if @strict
       if line =~ /system (["'][^"' ]*(?:\s[^"' ]*)+["'])/
         bad_system = $1
@@ -870,7 +885,7 @@ class FormulaAuditor
     audit_deps
     audit_conflicts
     audit_options
-    audit_patches
+    audit_legacy_patches
     audit_text
     audit_caveats
     text.without_patch.split("\n").each_with_index { |line, lineno| audit_line(line, lineno+1) }
@@ -976,9 +991,11 @@ class ResourceAuditor
 
     return unless using
 
-    if using == :ssl3 || using == CurlSSL3DownloadStrategy
+    if using == :ssl3 || \
+      (Object.const_defined?("CurlSSL3DownloadStrategy") && using == CurlSSL3DownloadStrategy)
       problem "The SSL3 download strategy is deprecated, please choose a different URL"
-    elsif using == CurlUnsafeDownloadStrategy || using == UnsafeSubversionDownloadStrategy
+    elsif (Object.const_defined?("CurlUnsafeDownloadStrategy") && using == CurlUnsafeDownloadStrategy) || \
+      (Object.const_defined?("UnsafeSubversionDownloadStrategy") && using == UnsafeSubversionDownloadStrategy)
       problem "#{using.name} is deprecated, please choose a different URL"
     end
 
