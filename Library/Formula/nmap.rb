@@ -12,8 +12,6 @@ class Nmap < Formula
     sha256 "73c5cc0e510d834016a13bc37013454805435db55575af53eb49d23d27a8756a" => :mountain_lion
   end
 
-  conflicts_with 'ndiff', :because => 'both install `ndiff` binaries'
-
   fails_with :llvm do
     build 2334
   end
@@ -36,6 +34,6 @@ class Nmap < Formula
   end
 
   test do
-    system "#{bin}/nmap", '-p80,443', 'google.com'
+    system "#{bin}/nmap", "-p80,443", "google.com"
   end
 end
