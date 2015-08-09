@@ -23,6 +23,7 @@ class GobjectIntrospection < Formula
   end
 
   def install
+    ENV.prepend_path "PKG_CONFIG_PATH", Formula["libffi"].opt_lib/"pkgconfig"
     ENV["GI_SCANNER_DISABLE_CACHE"] = "true"
     ENV.universal_binary if build.universal?
     inreplace "giscanner/transformer.py", "/usr/share", "#{HOMEBREW_PREFIX}/share"
