@@ -475,9 +475,15 @@ module Homebrew
       end
 
       test "brew", "fetch", "--retry", *unchanged_dependencies unless unchanged_dependencies.empty?
-      test "brew", "fetch", "--retry", "--build-bottle", *changed_dependences unless changed_dependences.empty?
-      # Install changed dependencies as new bottles so we don't have checksum problems.
-      test "brew", "install", "--build-bottle", *changed_dependences unless changed_dependences.empty?
+
+      unless changed_dependences.empty?
+        test "brew", "fetch", "--retry", "--build-bottle", *changed_dependences
+        # Install changed dependencies as new bottles so we don't have checksum problems.
+        test "brew", "install", "--build-bottle", *changed_dependences
+        # Run postinstall on them because the tested formula might depend on
+        # this step
+        test "brew", "postinstall", *changed_dependences
+      end
       formula_fetch_options = []
       formula_fetch_options << "--build-bottle" unless ARGV.include? "--no-bottle"
       formula_fetch_options << "--force" if ARGV.include? "--cleanup"
@@ -787,7 +793,7 @@ module Homebrew
       bottle_args << "--tap=#{tap}" if tap
       safe_system "brew", "bottle", *bottle_args
 
-      remote_repo = tap ? tap.gsub("/", "-") : "homebrew"
+      remote_repo = tap ? tap.tr("/", "-") : "homebrew"
 
       remote = "git@github.com:BrewTestBot/#{remote_repo}.git"
       tag = pr ? "pr-#{pr}" : "testing-#{number}"

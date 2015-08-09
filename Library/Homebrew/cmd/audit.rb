@@ -242,7 +242,7 @@ class FormulaAuditor
     if @online
       same_name_tap_formulae += @@remote_official_taps.map do |tap|
         Thread.new { Homebrew.search_tap "homebrew", tap, name }
-      end.map(&:value).flatten
+      end.flat_map(&:value)
     end
 
     same_name_tap_formulae.delete(full_name)
@@ -360,12 +360,12 @@ class FormulaAuditor
       EOS
     end
 
-    if desc =~ /[Cc]ommandline/
-      problem "It should be \"command-line\", not \"commandline\"."
+    if desc =~ /([Cc]ommand ?line)/
+      problem "Description should use \"command-line\" instead of \"#{$1}\""
     end
 
-    if desc =~ /[Cc]ommand line/
-      problem "It should be \"command-line\", not \"command line\"."
+    if desc =~ %r[^([Aa]n?)\s]
+      problem "Please remove the indefinite article \"#{$1}\" from the beginning of the description"
     end
   end
 
@@ -1051,7 +1051,8 @@ class ResourceAuditor
            %r{^http://fossies\.org/},
            %r{^http://mirrors\.kernel\.org/},
            %r{^http://([^/]*\.|)bintray\.com/},
-           %r{^http://tools\.ietf\.org/}
+           %r{^http://tools\.ietf\.org/},
+           %r{^http://www\.mirrorservice\.org/}
         problem "Please use https:// for #{p}"
       when %r{^http://search\.mcpan\.org/CPAN/(.*)}i
         problem "#{p} should be `https://cpan.metacpan.org/#{$1}`"
