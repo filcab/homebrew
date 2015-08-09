@@ -63,7 +63,6 @@ class Glib < Formula
       --disable-maintainer-mode
       --disable-dependency-tracking
       --disable-silent-rules
-      --disable-dtrace
       --disable-libelf
       --prefix=#{prefix}
       --localstatedir=#{var}
