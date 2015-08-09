@@ -42,8 +42,8 @@ class Gnuplot < Formula
   depends_on "gd" => :recommended
   depends_on "lua" => :recommended
   depends_on "jpeg"
+  depends_on "libpng"
   depends_on "libtiff"
-  depends_on "readline"
   depends_on "pango" if (build.with? "cairo") || (build.with? "wxmac")
   depends_on "pdflib-lite" => :optional
   depends_on "qt" => :optional
@@ -69,7 +69,6 @@ class Gnuplot < Formula
       --disable-silent-rules
       --prefix=#{prefix}
     ]
-    #  --with-readline=#{Formula["readline"].opt_prefix}
 
     args << "--with-pdf=#{pdflib}" if build.with? "pdflib-lite"
     args << ((build.with? "gd") ? "--with-gd=#{gd}" : "--without-gd")
