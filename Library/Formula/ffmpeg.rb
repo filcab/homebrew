@@ -67,7 +67,7 @@ class Ffmpeg < Formula
   depends_on "libquvi" => :optional
   depends_on "libvidstab" => :optional
   depends_on "x265" => :optional
-  #depends_on "openssl" => :optional
+  depends_on "openssl" if build.with? "openssl"
   depends_on "libssh" => :optional
   depends_on "webp" => :optional
   depends_on "zeromq" => :optional
