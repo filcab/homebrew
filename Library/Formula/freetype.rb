@@ -18,8 +18,6 @@ class Freetype < Formula
   option :universal
   option "without-subpixel", "Disable sub-pixel rendering (a.k.a. LCD rendering, or ClearType)"
 
-  #depends_on "libpng"
-
   # Don't define a TYPEOF macro in ftconfig.h
   # https://savannah.nongnu.org/bugs/index.php?45376
   # http://git.savannah.gnu.org/cgit/freetype/freetype2.git/commit/?id=5931268eecaeda3e05580bdc8885348fecc43fa8

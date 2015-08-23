@@ -13,12 +13,11 @@ class Theora < Formula
   end
 
   depends_on "pkg-config" => :build
-  #depends_on "libtool" => :build
   depends_on "libogg"
   depends_on "libvorbis"
 
   def install
-    cp Dir["#{Formula["libtool"].opt_share}/libtool/*/config.{guess,sub}"], buildpath
+    #cp Dir["#{Formula["libtool"].opt_share}/libtool/*/config.{guess,sub}"], buildpath
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
                           "--disable-oggtest",

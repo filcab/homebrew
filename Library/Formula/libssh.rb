@@ -14,7 +14,6 @@ class Libssh < Formula
 
   depends_on "cmake" => :build
   depends_on "ninja" => :build
-  #depends_on "openssl"
 
   def install
     mkdir "build" do
