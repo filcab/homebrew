@@ -547,12 +547,16 @@ class FormulaInstaller
     end
 
     Utils.safe_fork do
+      # Invalidate the current sudo timestamp in case a build script calls sudo
+      system "/usr/bin/sudo", "-k"
+
       if Sandbox.available? && ARGV.sandbox? && !Sandbox.auto_disable?
         sandbox = Sandbox.new
         formula.logs.mkpath
         sandbox.record_log(formula.logs/"sandbox.build.log")
         sandbox.allow_write_temp_and_cache
         sandbox.allow_write_log(formula)
+        sandbox.allow_write_xcode
         sandbox.allow_write_cellar(formula)
         sandbox.exec(*args)
       else
@@ -642,7 +646,7 @@ class FormulaInstaller
       opoo "These files were overwritten during `brew link` step:"
       puts link_overwrite_backup.keys
       puts
-      puts "They are backup in #{backup_dir}"
+      puts "They have been backed up in #{backup_dir}"
       @show_summary_heading = true
     end
   end

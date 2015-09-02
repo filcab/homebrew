@@ -1,14 +1,14 @@
 class Embulk < Formula
   desc "Data transfer between various databases, file formats and services"
   homepage "http://www.embulk.org/"
-  url "https://bintray.com/artifact/download/embulk/maven/embulk-0.7.2.jar"
-  sha256 "cb6d7f595645bd4b8944f6e4ffabb1f68bf6be1451801ee9df8db9ce4b305a09"
+  url "https://bintray.com/artifact/download/embulk/maven/embulk-0.7.4.jar"
+  sha256 "848024baf8e940f1d0d1085588f28ca80e1ad5b9343ad9b942056132e30edaef"
 
   bottle do
     cellar :any
-    sha256 "44e1429b95e2e2f84b7f03a03b38eeb91590b1a74937710653c91c14afd42a1b" => :yosemite
-    sha256 "c8763f8421c0ce1474555021e12e6a9eb1fce00f58e38f86f3938deddf5b838c" => :mavericks
-    sha256 "3ebca8c668e52ce613118ce50bee7886eb12caea53c8ab7fccbf6ea7703b33f2" => :mountain_lion
+    sha256 "46efb139c4365e9dbeeb861393b51656fac30d75fab4695a9c52f61f0bed212c" => :yosemite
+    sha256 "09b54755a268b755869b6217785dede4d5a88a2ad2ce03560c9fe47b92e758e9" => :mavericks
+    sha256 "39e1dbf2a4911c44af8e661fd034dba3455e17ccdbc940c2452719c9b95f5ba8" => :mountain_lion
   end
 
   depends_on :java
