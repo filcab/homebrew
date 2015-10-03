@@ -22,25 +22,19 @@ class Wine < Formula
   end
 
   bottle do
+    sha256 "545e28e3c8442d8be08dbb5ec193bbc9fbf82d1c196030e07f4758161af42924" => :el_capitan
     sha1 "348f15e19880888d19d04d2fe4bad42048fe6828" => :yosemite
     sha1 "69f05602ecde44875cf26297871186aaa0b26cd7" => :mavericks
     sha1 "a89371854006687b74f4446a52ddb1f68cfafa7e" => :mountain_lion
   end
 
   devel do
-    url "https://downloads.sourceforge.net/project/wine/Source/wine-1.7.51.tar.bz2"
-    mirror "http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.51.tar.bz2"
-    sha256 "397fc95b463d6ae1b65ab0477d9fe5d0871e8e2a3322bc9d984e438f2c4d0f52"
+    url "https://downloads.sourceforge.net/project/wine/Source/wine-1.7.52.tar.bz2"
+    mirror "http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.52.tar.bz2"
+    sha256 "0773b32a0c358323db4c383ceb1e9e28d5d4ed4ea37570af2bcb41fecf0d554b"
 
     depends_on "samba" => :optional
     depends_on "gnutls"
-
-    # Patch to fix screen-flickering issues. Still relevant on 1.7.23.
-    # https://bugs.winehq.org/show_bug.cgi?id=34166
-    patch do
-      url "https://bugs.winehq.org/attachment.cgi?id=47639"
-      sha256 "3054467e0b1ef9efce3e1b24497bd26e00c4727e8bd7b1e990d1352bb1819de0"
-    end
   end
 
   head do
@@ -165,13 +159,18 @@ class Wine < Formula
     s = <<-EOS.undent
       You may want to get winetricks:
         brew install winetricks
-
-      The current version of Wine contains a partial implementation of dwrite.dll
-      which may cause text rendering issues in applications such as Steam.
-      We recommend that you run winecfg, add an override for dwrite in the
-      Libraries tab, and edit the override mode to "disable". See:
-        https://bugs.winehq.org/show_bug.cgi?id=31374
     EOS
+
+    if build.stable?
+      s += <<-EOS.undent
+
+        The current version of Wine contains a partial implementation of dwrite.dll
+        which may cause text rendering issues in applications such as Steam.
+        We recommend that you run winecfg, add an override for dwrite in the
+        Libraries tab, and edit the override mode to "disable". See:
+          https://bugs.winehq.org/show_bug.cgi?id=31374
+      EOS
+    end
 
     if build.with? "x11"
       s += <<-EOS.undent
