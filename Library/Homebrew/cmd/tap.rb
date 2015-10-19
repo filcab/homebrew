@@ -1,4 +1,5 @@
 require "tap"
+require "descriptions"
 
 module Homebrew
   def tap
@@ -14,21 +15,34 @@ module Homebrew
     else
       user, repo = tap_args
       clone_target = ARGV.named[1]
-      opoo "Already tapped!" unless install_tap(user, repo, clone_target)
+      opoo "#{user}/#{repo} already tapped!" unless install_tap(user, repo, clone_target)
     end
   end
 
   def install_tap(user, repo, clone_target = nil)
-    tap = Tap.new user, repo
+    # ensure git is installed
+    Utils.ensure_git_installed!
+
+    tap = Tap.fetch user, repo
     return false if tap.installed?
     ohai "Tapping #{tap}"
     remote = clone_target || "https://github.com/#{tap.user}/homebrew-#{tap.repo}"
     args = %W[clone #{remote} #{tap.path}]
     args << "--depth=1" unless ARGV.include?("--full")
-    safe_system "git", *args
+
+    begin
+      safe_system "git", *args
+    rescue Interrupt, ErrorDuringExecution
+      ignore_interrupts do
+        sleep 0.1 # wait for git to cleanup the top directory when interrupt happens.
+        tap.path.parent.rmdir_if_possible
+      end
+      raise
+    end
 
     formula_count = tap.formula_files.size
     puts "Tapped #{formula_count} formula#{plural(formula_count, "e")} (#{tap.path.abv})"
+    Descriptions.cache_formulae(tap.formula_names)
 
     if !clone_target && tap.private?
       puts <<-EOS.undent

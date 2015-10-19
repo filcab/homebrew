@@ -1,7 +1,9 @@
 require "cmd/tap"
+require "cmd/doctor"
 require "formula_versions"
 require "migrator"
 require "formulary"
+require "descriptions"
 
 module Homebrew
   def update
@@ -11,6 +13,19 @@ module Homebrew
         Use `brew upgrade <formula>`.
       EOS
     end
+
+    # check permissions
+    checks = Checks.new
+    %w[
+      check_access_usr_local
+      check_access_homebrew_repository
+    ].each do |check|
+      out = checks.send(check)
+      odie out unless out.nil?
+    end
+
+    # ensure git is installed
+    Utils.ensure_git_installed!
 
     # ensure GIT_CONFIG is unset as we need to operate on .git/config
     ENV.delete("GIT_CONFIG")
@@ -24,12 +39,18 @@ module Homebrew
     report = Report.new
     master_updater = Updater.new(HOMEBREW_REPOSITORY)
     master_updater.pull!
+    master_updated = master_updater.updated?
+    if master_updated
+      puts "Updated Homebrew from #{master_updater.initial_revision[0, 8]} " \
+           "to #{master_updater.current_revision[0, 8]}."
+    end
     report.update(master_updater.report)
 
     # rename Taps directories
     # this procedure will be removed in the future if it seems unnecessasry
     rename_taps_dir_if_necessary
 
+    updated_taps = []
     Tap.each do |tap|
       next unless tap.git?
 
@@ -41,12 +62,20 @@ module Homebrew
         rescue
           onoe "Failed to update tap: #{tap}"
         else
+          updated_taps << tap.name if updater.updated?
           report.update(updater.report) do |_key, oldval, newval|
             oldval.concat(newval)
           end
         end
       end
     end
+    unless updated_taps.empty?
+      puts "Updated #{updated_taps.size} tap#{plural(updated_taps.size)} " \
+           "(#{updated_taps.join(", ")})."
+    end
+    puts "Already up-to-date." unless master_updated || !updated_taps.empty?
+
+    Tap.clear_cache
 
     # automatically tap any migrated formulae's new tap
     report.select_formula(:D).each do |f|
@@ -56,7 +85,7 @@ module Homebrew
       tap_user, tap_repo = migration.split "/"
       install_tap tap_user, tap_repo
       # update tap for each Tab
-      tabs = dir.subdirs.each.map { |d| Tab.for_keg(Keg.new(d)) }
+      tabs = dir.subdirs.map { |d| Tab.for_keg(Keg.new(d)) }
       next if tabs.first.source["tap"] != "Homebrew/homebrew"
       tabs.each { |tab| tab.source["tap"] = "#{tap_user}/homebrew-#{tap_repo}" }
       tabs.each(&:write)
@@ -78,18 +107,25 @@ module Homebrew
       next unless (dir = HOMEBREW_CELLAR/oldname).directory? && !dir.subdirs.empty?
 
       begin
-        migrator = Migrator.new(Formulary.factory("#{user}/#{repo}/#{newname}"))
+        f = Formulary.factory("#{user}/#{repo}/#{newname}")
+      rescue FormulaUnavailableError, *FormulaVersions::IGNORED_EXCEPTIONS
+      end
+
+      next unless f
+
+      begin
+        migrator = Migrator.new(f)
         migrator.migrate
       rescue Migrator::MigratorDifferentTapsError
       end
     end
 
     if report.empty?
-      puts "Already up-to-date."
+      puts "No changes to formulae." if master_updated || !updated_taps.empty?
     else
-      puts "Updated Homebrew from #{master_updater.initial_revision[0, 8]} to #{master_updater.current_revision[0, 8]}."
       report.dump
     end
+    Descriptions.update_cache(report)
   end
 
   private
@@ -175,9 +211,38 @@ class Updater
       @stashed = true
     end
 
-    @initial_branch = `git symbolic-ref --short HEAD`.chomp
-    if @initial_branch != "master" && !@initial_branch.empty?
-      safe_system "git", "checkout", "master", *quiet
+    # The upstream repository's default branch may not be master;
+    # check refs/remotes/origin/HEAD to see what the default
+    # origin branch name is, and use that. If not set, fall back to "master".
+    begin
+      @upstream_branch = `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`
+      @upstream_branch = @upstream_branch.chomp.sub('refs/remotes/origin/', '')
+    rescue ErrorDuringExecution
+      @upstream_branch = "master"
+    end
+
+    begin
+      @initial_branch = `git symbolic-ref --short HEAD 2>/dev/null`.chomp
+    rescue ErrorDuringExecution
+      @initial_branch = ""
+    end
+
+    # Used for testing purposes, e.g., for testing formula migration after
+    # renaming it in the currently checked-out branch. To test run
+    # "brew update --simulate-from-current-branch"
+    if ARGV.include?("--simulate-from-current-branch")
+      @initial_revision = `git rev-parse -q --verify #{@upstream_branch}`.chomp
+      @current_revision = read_current_revision
+      begin
+        safe_system "git", "merge-base", "--is-ancestor", @initial_revision, @current_revision
+      rescue ErrorDuringExecution
+        odie "Your HEAD is not a descendant of '#{@upstream_branch}'."
+      end
+      return
+    end
+
+    if @initial_branch != @upstream_branch && !@initial_branch.empty?
+      safe_system "git", "checkout", @upstream_branch, *quiet
     end
 
     @initial_revision = read_current_revision
@@ -186,13 +251,16 @@ class Updater
     safe_system "git", "config", "core.autocrlf", "false"
 
     args = ["pull"]
-    args << "--rebase" if ARGV.include? "--rebase"
+    args << "--ff"
+    args << ((ARGV.include? "--rebase") ? "--rebase" : "--no-rebase")
     args += quiet
     args << "origin"
-    # the refspec ensures that 'origin/master' gets updated
-    args << "refs/heads/master:refs/remotes/origin/master"
+    # the refspec ensures that the default upstream branch gets updated
+    args << "refs/heads/#{@upstream_branch}:refs/remotes/origin/#{@upstream_branch}"
 
     reset_on_interrupt { safe_system "git", *args }
+
+    @current_revision = read_current_revision
 
     if @initial_branch != "master" && !@initial_branch.empty?
       safe_system "git", "checkout", @initial_branch, *quiet
@@ -206,15 +274,13 @@ class Updater
       end
       @stashed = false
     end
-
-    @current_revision = read_current_revision
   end
 
   def reset_on_interrupt
     ignore_interrupts { yield }
   ensure
     if $?.signaled? && $?.termsig == 2 # SIGINT
-      safe_system "git", "checkout", @initial_branch
+      safe_system "git", "checkout", @initial_branch unless @initial_branch.empty?
       safe_system "git", "reset", "--hard", @initial_revision
       safe_system "git", "stash", "pop" if @stashed
     end
@@ -224,6 +290,8 @@ class Updater
     map = Hash.new { |h, k| h[k] = [] }
 
     if initial_revision && initial_revision != current_revision
+      wc_revision = read_current_revision
+
       diff.each_line do |line|
         status, *paths = line.split
         src = paths.first
@@ -239,7 +307,11 @@ class Updater
           file = repository.join(src)
           begin
             formula = Formulary.factory(file)
-            new_version = formula.pkg_version
+            new_version = if wc_revision == current_revision
+              formula.pkg_version
+            else
+              FormulaVersions.new(formula).formula_at_revision(@current_revision, &:pkg_version)
+            end
             old_version = FormulaVersions.new(formula).formula_at_revision(@initial_revision, &:pkg_version)
             next if new_version == old_version
           rescue FormulaUnavailableError, *FormulaVersions::IGNORED_EXCEPTIONS => e
@@ -254,6 +326,10 @@ class Updater
     end
 
     map
+  end
+
+  def updated?
+    initial_revision && initial_revision != current_revision
   end
 
   private
@@ -327,7 +403,7 @@ class Report
         user = $1
         repo = $2.sub("homebrew-", "")
         oldname = path.basename(".rb").to_s
-        next unless newname = Tap.new(user, repo).formula_renames[oldname]
+        next unless newname = Tap.fetch(user, repo).formula_renames[oldname]
       else
         oldname = path.basename(".rb").to_s
         next unless newname = FORMULA_RENAMES[oldname]
@@ -364,10 +440,33 @@ class Report
 
   def dump_formula_report(key, title)
     formula = select_formula(key)
-    formula.map! { |oldname, newname| "#{oldname} -> #{newname}" } if key == :R
     unless formula.empty?
+      # Determine list item indices of installed formulae.
+      formula_installed_index = formula.each_index.select do |index|
+        name, newname = formula[index]
+        installed?(name) || (newname && installed?(newname))
+      end
+
+      # Format list items of renamed formulae.
+      if key == :R
+        formula.map! { |oldname, newname| "#{oldname} -> #{newname}" }
+      end
+
+      # Append suffix '(installed)' to list items of installed formulae.
+      formula_installed_index.each do |index|
+        formula[index] += " (installed)"
+      end
+
+      # Fetch list items of installed formulae for highlighting.
+      formula_installed = formula.values_at(*formula_installed_index)
+
+      # Dump formula list.
       ohai title
-      puts_columns formula
+      puts_columns(formula, formula_installed)
     end
+  end
+
+  def installed?(formula)
+    (HOMEBREW_CELLAR/formula.split("/").last).directory?
   end
 end

@@ -3,15 +3,15 @@ require "language/go"
 class Fzf < Formula
   desc "Fuzzy finder for your shell"
   homepage "https://github.com/junegunn/fzf"
-  url "https://github.com/junegunn/fzf/archive/0.10.2.tar.gz"
-  sha256 "7f71ec91fe2234e6ad3a32f291e7030d4ae25d9e9751b3dd1d8a91666a3652a8"
+  url "https://github.com/junegunn/fzf/archive/0.10.8.tar.gz"
+  sha256 "95ba7d39a311609f69d63bc2272f97aec92c974fe5a9560a4a0730b95828e4f4"
   head "https://github.com/junegunn/fzf.git"
 
   bottle do
-    cellar :any
-    sha256 "4387284e94e137f020705d7f3262a88896f405b807bc39dbf101ed2dba42a4e3" => :yosemite
-    sha256 "52f9f81c3f3a581c990ced1a227438d3f47711c22f8c2fd36256710bf7b586ce" => :mavericks
-    sha256 "8262db91999bf59b41df10a90d93e57bacf2cc89024e223bd3dcfeaeaebad533" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "144be5b8543cc4d47a5fb3b26d78b2fe2b74ef7cafd8e09e50d2a13caf073f0b" => :el_capitan
+    sha256 "9e8eab253bd1c68d44696d8fc90199095a5fba812def68b18918ea909a7de7f8" => :yosemite
+    sha256 "67396cdcbc633f70230ebd47ec92a807d3c6a914e29eaea2a5e3aaed0f62b9b6" => :mavericks
   end
 
   depends_on "go" => :build
@@ -47,10 +47,10 @@ class Fzf < Formula
 
   def caveats; <<-EOS.undent
     To install useful keybindings and fuzzy completion:
-      #{prefix}/install
+      #{opt_prefix}/install
 
     To use fzf in Vim, add the following line to your .vimrc:
-      set rtp+=#{prefix}
+      set rtp+=#{opt_prefix}
     EOS
   end
 

@@ -65,6 +65,7 @@ Before contributing, make sure your package:
 *   isn't already waiting to be merged (check the [issue tracker](https://github.com/Homebrew/homebrew/issues))
 *   is still supported by upstream
 *   has a stable, tagged version (i.e. not just a GitHub repository with no versions). See [Interesting-Taps-&-Branches](Interesting-Taps-&-Branches.md) for where pre-release and head-only versions belong.
+*   passes all `brew audit --strict --online $FORMULA` tests.
 
 Make sure you search thoroughly (all aliases!). We don’t want you to waste your time.
 
@@ -81,7 +82,7 @@ Formulae aren’t that complicated. [etl](https://github.com/Homebrew/homebrew/b
 
 And then [Git](https://github.com/Homebrew/homebrew/tree/master/Library/Formula/git.rb) and [flac](https://github.com/Homebrew/homebrew/tree/master/Library/Formula/flac.rb) show more advanced functionality.
 
-A more complete example-formula [cheat-sheet](https://github.com/Homebrew/homebrew/blob/master/Library/Contributions/example-formula.rb) shows almost all the stuff you can use in a Formula.
+Refer to the [Formula class API documentation](http://www.rubydoc.info/github/Homebrew/homebrew/master/frames) which shows all the stuff you can use in a Formula.
 
 ## Grab the URL
 
