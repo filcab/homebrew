@@ -30,7 +30,6 @@ class Wget < Formula
   option "with-iri", "Enable iri support"
   option "with-debug", "Build with debug support"
 
-  depends_on "openssl" => :recommended
   depends_on "libressl" => :optional
   depends_on "libidn" if build.with? "iri"
   depends_on "pcre" => :optional
