@@ -4,8 +4,12 @@ class AppEnginePython < Formula
   url "https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.27.zip"
   sha256 "6192f295969dabf8659ce9a698450154f7c8c35b89c6e3cb52908c8f50d7c1f4"
 
-  conflicts_with "go-app-engine-32", :because => "multiple conflicting files"
-  conflicts_with "go-app-engine-64", :because => "multiple conflicting files"
+  bottle :unneeded
+
+  conflicts_with "app-engine-go-32",
+    :because => "both install the same binaries"
+  conflicts_with "app-engine-go-64",
+    :because => "both install the same binaries"
 
   def install
     cd ".."

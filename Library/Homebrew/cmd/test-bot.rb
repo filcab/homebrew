@@ -336,6 +336,7 @@ module Homebrew
       # Handle formulae arguments being passed on the command-line e.g. `brew test-bot wget fish`.
       elsif @formulae && @formulae.any?
         @name = "#{@formulae.first}-#{diff_end_sha1}"
+        diff_start_sha1 = diff_end_sha1
       # Handle a hash being passed on the command-line e.g. `brew test-bot 1a2b3c`.
       elsif @hash
         test "git", "checkout", @hash
@@ -440,11 +441,6 @@ module Homebrew
       test "brew", "uses", canonical_formula_name
 
       formula = Formulary.factory(canonical_formula_name)
-
-      formula.conflicts.map { |c| Formulary.factory(c.name) }.
-        select(&:installed?).each do |conflict|
-          test "brew", "unlink", conflict.name
-        end
 
       installed_gcc = false
 
@@ -572,7 +568,7 @@ module Homebrew
       # Don't care about e.g. bottle failures for dependencies.
       install_passed = false
       run_as_not_developer do
-        if !ARGV.include?("--fast") || formula_bottled
+        if !ARGV.include?("--fast") || formula_bottled || formula.bottle_unneeded?
           test "brew", "install", "--only-dependencies", *install_args unless dependencies.empty?
           test "brew", "install", *install_args
           install_passed = steps.last.passed?
@@ -595,6 +591,7 @@ module Homebrew
             bottle_merge_args << "--keep-old" if ARGV.include? "--keep-old"
             test "brew", "bottle", *bottle_merge_args
             test "brew", "uninstall", "--force", canonical_formula_name
+            FileUtils.ln bottle_filename, HOMEBREW_CACHE/bottle_filename, :force => true
             if unchanged_build_dependencies.any?
               test "brew", "uninstall", "--force", *unchanged_build_dependencies
               unchanged_dependencies -= unchanged_build_dependencies
@@ -1021,7 +1018,14 @@ module Homebrew
       end
     end
   ensure
-    HOMEBREW_CACHE.children.each(&:rmtree) if ARGV.include? "--clean-cache"
+    if ARGV.include? "--clean-cache"
+      HOMEBREW_CACHE.children.each(&:rmtree)
+    else
+      Dir.glob("*.bottle*.tar.gz") do |bottle_file|
+        FileUtils.rm_f HOMEBREW_CACHE/bottle_file
+      end
+    end
+
     Homebrew.failed = any_errors
   end
 end
