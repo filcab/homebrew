@@ -1,14 +1,14 @@
 class Node < Formula
   desc "Platform built on the V8 JavaScript runtime to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v5.0.0/node-v5.0.0.tar.gz"
-  sha256 "698d9662067ae6a20a2586e5c09659735fc0050769a0d8f76f979189ceaccdf4"
+  url "https://nodejs.org/dist/v5.1.1/node-v5.1.1.tar.gz"
+  sha256 "a779e024f800b5ec51f375fa1c14eda7254216daa36a1960cc1e4195b9fc22c3"
   head "https://github.com/nodejs/node.git"
 
   bottle do
-    sha256 "53de115aa6307f01f3e34f560f1258441441336b515287101556bdd4cc753d60" => :el_capitan
-    sha256 "4e7e42bda989b3acc24168e00c62fe4ff5fa09e788c5d84c1add1ef27ae59a5b" => :yosemite
-    sha256 "b6a4b8e9648c0fc982e2284fecf19d3cc007dc7cf93788f573e50d08a399cebd" => :mavericks
+    sha256 "7a8f141c9727fd6fa13e01f9b3b0d9725ef656bf77c6c38a806c721d3b9441e9" => :el_capitan
+    sha256 "44a5c2514f83a4d5678f49b5484b48080fb183195e776877da8c67db4def5c01" => :yosemite
+    sha256 "a0a1f248bb820899514478c4964932bc06cb8d57a404c8e4ec10d0893b6afa75" => :mavericks
   end
 
   option "with-debug", "Build with debugger hooks"
@@ -32,9 +32,12 @@ class Node < Formula
     fails_with :gcc => n
   end
 
+  # We track major/minor from upstream Node releases.
+  # We will accept *important* npm patch releases when necessary.
+  # https://github.com/Homebrew/homebrew/pull/46098#issuecomment-157802319
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-3.3.9.tgz"
-    sha256 "b406bfc670045c2b92432aff419fe22ff28fd439bb0ef4faa14fd6f16bda0c22"
+    url "https://registry.npmjs.org/npm/-/npm-3.3.12.tgz"
+    sha256 "09475d7096731d93c0aacd7dfe58794d67c52ee6562675aee6c1f734ddba8158"
   end
 
   resource "icu4c" do
@@ -70,6 +73,10 @@ class Node < Formula
       cd buildpath/"npm_install" do
         system "./configure", "--prefix=#{libexec}/npm"
         system "make", "install"
+        # `package.json` has relative paths to the npm_install directory.
+        # This copies back over the vanilla `package.json` that is expected.
+        # https://github.com/Homebrew/homebrew/issues/46131#issuecomment-157845008
+        cp buildpath/"npm_install/package.json", libexec/"npm/lib/node_modules/npm"
       end
 
       if build.with? "completion"

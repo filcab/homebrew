@@ -1,14 +1,14 @@
 class Tutum < Formula
   desc "Docker platform for dev and ops"
   homepage "https://www.tutum.co/"
-  url "https://github.com/tutumcloud/cli/archive/v0.20.0.tar.gz"
-  sha256 "313e6c2adced5895df778939e0bd1d2198582646e0c264ba01b0e29dfd635e4a"
+  url "https://github.com/tutumcloud/cli/archive/v0.20.2.tar.gz"
+  sha256 "b15d4141fdd9dbf0de4a32b63cddc3d7cfc1efea527e8ac3c1e45364b6abff01"
 
   bottle do
     cellar :any
-    sha256 "f598d0b7096cf8b37b25415b7255289008a72809275422a0698f8bac3f82e9a4" => :el_capitan
-    sha256 "f5d353c31804d77c211687430d1a24c7cb802f10f74abcab65bb09bb39377045" => :yosemite
-    sha256 "084df6a94c8dda5f14036b7dd63cc4b18f56968fa4c4ca7fc6ccbb1f1aff3092" => :mavericks
+    sha256 "6cd9543017eb45f76a24acd42934e8b21d4cd39f91298e8b80d34cb1b822e32f" => :el_capitan
+    sha256 "7b4372d2657cf2aa7362351b7d002e1956f6cc6a55c9b14d9fc860a78b3057b8" => :yosemite
+    sha256 "cc3432c8b6203b5dcff645fdce7cb889ce131625ef80935a409249a44c97a2f0" => :mavericks
   end
 
   depends_on :python if MacOS.version <= :snow_leopard
@@ -30,8 +30,8 @@ class Tutum < Formula
   end
 
   resource "python-tutum" do
-    url "https://github.com/tutumcloud/python-tutum/archive/v0.20.0.tar.gz"
-    sha256 "45cb8165e47d2e6521d8424fa57e3869a3a835990ad03bc3d2b330c7e14c1dad"
+    url "https://github.com/tutumcloud/python-tutum/archive/v0.20.2.tar.gz"
+    sha256 "783e6f3791936fdec4b3aef7f50a1d2119e69013692b391f025b1508f1a16561"
   end
 
   resource "backports.ssl-match-hostname" do

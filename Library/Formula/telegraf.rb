@@ -3,14 +3,14 @@ require "language/go"
 class Telegraf < Formula
   desc "Server-level metric gathering agent for InfluxDB"
   homepage "https://influxdb.com"
-  url "https://github.com/influxdb/telegraf/archive/v0.2.1.tar.gz"
-  sha256 "e3b397e21bad8c5f00d2c4569f43561b8213c744718ed865cfb4984e46be1b16"
+  url "https://github.com/influxdb/telegraf/archive/v0.2.3.tar.gz"
+  sha256 "b6891b5f310232e47461b780a1151afed942438e323c44b77496a885fa6fea86"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "286ee99d771bf5d5d98f8dab18c991a083fe0b52f297196cf7f9d1627e00b72b" => :el_capitan
-    sha256 "fdb7cee9e9a3145eec09a236abdf65856f97cd04b9c43517722b050d07eec884" => :yosemite
-    sha256 "f112adafe62b69dd4f41c617c1a4c84a7ec84ef2e7eda23ae09459714700a499" => :mavericks
+    sha256 "c26df3331a29c4104c397f0233055ec64cac03be964e32a68a059bc9a5563e78" => :el_capitan
+    sha256 "67fc5b3b22d843a467a521807a158ada5ff9f90b2cda7e54ce62ebcdd0c1de9e" => :yosemite
+    sha256 "d52224210126cfe21c0f5185d34eb7987f6fdfd713f6a3da98990a4dfd32c7a0" => :mavericks
   end
 
   depends_on "go" => :build
@@ -31,7 +31,7 @@ class Telegraf < Formula
     end
 
     bin.install telegraf_path/"telegraf"
-    etc.install telegraf_path/"etc/config.sample.toml" => "telegraf.conf"
+    etc.install telegraf_path/"etc/telegraf.conf" => "telegraf.conf"
   end
 
   plist_options :manual => "telegraf -config #{HOMEBREW_PREFIX}/etc/telegraf.conf"
