@@ -11,6 +11,7 @@ class IntegrationCommandTests < Homebrew::TestCase
       -W0
       -I#{HOMEBREW_LIBRARY_PATH}/test/lib
       -rconfig
+      -rintegration_mocks
     ]
     cmd_args << "-rsimplecov" if ENV["HOMEBREW_TESTS_COVERAGE"]
     cmd_args << (HOMEBREW_LIBRARY_PATH/"../brew.rb").resolved_path.to_s
@@ -100,6 +101,16 @@ class IntegrationCommandTests < Homebrew::TestCase
                  cmd("--repository")
   end
 
+  def test_help
+    assert_match "Example usage:",
+                 cmd("help")
+  end
+
+  def test_config
+    assert_match "HOMEBREW_VERSION: #{HOMEBREW_VERSION}",
+                 cmd("config")
+  end
+
   def test_install
     assert_match "#{HOMEBREW_CELLAR}/testball/0.1", cmd("install", testball)
   ensure
@@ -184,56 +195,105 @@ class IntegrationCommandTests < Homebrew::TestCase
   end
 
   def test_missing
-    url = "file://#{File.expand_path("..", __FILE__)}/tarballs/testball-0.1.tbz"
-    sha256 = "1dfb13ce0f6143fe675b525fc9e168adb2215c5d5965c9f57306bb993170914f"
     repo = CoreFormulaRepository.new
     foo_file = repo.formula_dir/"foo.rb"
     foo_file.write <<-EOS.undent
       class Foo < Formula
-        url "#{url}"
-        sha256 "#{sha256}"
+        url "https://example.com/foo-1.0"
       end
     EOS
 
     bar_file = repo.formula_dir/"bar.rb"
     bar_file.write <<-EOS.undent
       class Bar < Formula
-        url "#{url}"
-        sha256 "#{sha256}"
+        url "https://example.com/bar-1.0"
         depends_on "foo"
       end
     EOS
 
-    cmd("install", "bar")
-    cmd("uninstall", "foo")
+    (HOMEBREW_CELLAR/"bar/1.0").mkpath
     assert_match "foo", cmd("missing")
   ensure
-    cmd("uninstall", "--force", "foo", "bar")
-    cmd("cleanup", "--force", "--prune=all")
-    foo_file.unlink unless foo_file.nil?
-    bar_file.unlink unless bar_file.nil?
+    (HOMEBREW_CELLAR/"bar").rmtree
+    foo_file.unlink
+    bar_file.unlink
   end
 
-  def test_doctor_check_path_for_trailing_slashes
-    assert_match "Some directories in your path end in a slash",
-      cmd_fail("doctor", "check_path_for_trailing_slashes",
-               {"PATH" => ENV["PATH"] + File::PATH_SEPARATOR + "/foo/bar/"})
+  def test_doctor
+    assert_match "This is an integration test",
+                 cmd_fail("doctor", "check_integration_test")
   end
 
-  def test_doctor_check_for_anaconda
-    mktmpdir do |path|
-      anaconda = "#{path}/anaconda"
-      python = "#{path}/python"
-      FileUtils.touch anaconda
-      File.open(python, "w") do |file|
-        file.write("#! #{`which bash`}\necho -n '#{python}'\n")
+  def test_command
+    assert_equal "#{HOMEBREW_LIBRARY_PATH}/cmd/info.rb",
+                 cmd("command", "info")
+
+    assert_match "Unknown command",
+                 cmd_fail("command", "I-don't-exist")
+  end
+
+  def test_commands
+    assert_match "Built-in commands",
+                 cmd("commands")
+  end
+
+  def test_cat
+    formula_file = CoreFormulaRepository.new.formula_dir/"testball.rb"
+    content = <<-EOS.undent
+      class Testball < Formula
+        url "https://example.com/testball-0.1.tar.gz"
       end
-      FileUtils.chmod 0777, anaconda
-      FileUtils.chmod 0777, python
+    EOS
+    formula_file.write content
 
-      assert_match "Anaconda",
-        cmd_fail("doctor", "check_for_anaconda",
-                 {"PATH" => path + File::PATH_SEPARATOR + ENV["PATH"]})
+    assert_equal content.chomp, cmd("cat", "testball")
+  ensure
+    formula_file.unlink
+  end
+
+  def test_desc
+    formula_file = CoreFormulaRepository.new.formula_dir/"testball.rb"
+    content = <<-EOS.undent
+      class Testball < Formula
+        desc "Some test"
+        url "https://example.com/testball-0.1.tar.gz"
+      end
+    EOS
+    formula_file.write content
+
+    assert_equal "testball: Some test", cmd("desc", "testball")
+  ensure
+    formula_file.unlink
+  end
+
+  def test_edit
+    (HOMEBREW_REPOSITORY/".git").mkpath
+    formula_file = CoreFormulaRepository.new.formula_dir/"testball.rb"
+    content = <<-EOS.undent
+      class Testball < Formula
+        url "https://example.com/testball-0.1.tar.gz"
+        # something here
+      end
+    EOS
+    formula_file.write content
+
+    assert_match "# something here",
+                 cmd("edit", "testball", {"HOMEBREW_EDITOR" => "/bin/cat"})
+  ensure
+    formula_file.unlink
+    (HOMEBREW_REPOSITORY/".git").unlink
+  end
+
+  def test_custom_command
+    mktmpdir do |path|
+      cmd = "int-test-#{rand}"
+      file = "#{path}/brew-#{cmd}"
+
+      File.open(file, "w") { |f| f.write "#!/bin/sh\necho 'I am #{cmd}'\n" }
+      FileUtils.chmod 0777, file
+
+      assert_match "I am #{cmd}",
+        cmd(cmd, {"PATH" => "#{path}#{File::PATH_SEPARATOR}#{ENV["PATH"]}"})
     end
   end
 end

@@ -304,11 +304,19 @@ module Homebrew
       end
 
       def check_for_unsupported_osx
-        if !ARGV.homebrew_developer? && OS::Mac.prerelease? then <<-EOS.undent
-        You are using OS X #{MacOS.version}.
-        We do not provide support for this pre-release version.
-        You may encounter build failures or other breakages.
-        EOS
+        return if ARGV.homebrew_developer?
+        if OS::Mac.prerelease?
+          <<-EOS.undent
+            You are using OS X #{MacOS.version}.
+            We do not provide support for this pre-release version.
+            You may encounter build failures or other breakages.
+          EOS
+        elsif OS::Mac.outdated_release?
+          <<-EOS.undent
+            You are using OS X #{MacOS.version}.
+            We (and Apple) do not provide support for this old version.
+            You may encounter build failures or other breakages.
+          EOS
         end
       end
 
@@ -506,9 +514,10 @@ module Homebrew
         unless HOMEBREW_PREFIX.writable_real? then <<-EOS.undent
         The /usr/local directory is not writable.
         Even if this directory was writable when you installed Homebrew, other
-        software may change permissions on this directory. Some versions of the
+        software may change permissions on this directory. For example, upgrading
+        to OS X El Capitan has been known to do this. Some versions of the
         "InstantOn" component of Airfoil or running Cocktail cleanup/optimizations
-        are known to do this.
+        are known to do this as well.
 
         You should probably change the ownership and permissions of /usr/local
         back to your user account.
