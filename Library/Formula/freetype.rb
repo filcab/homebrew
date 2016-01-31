@@ -1,10 +1,13 @@
 class Freetype < Formula
   desc "Software library to render fonts"
   homepage "http://www.freetype.org"
-  url "https://downloads.sf.net/project/freetype/freetype2/2.6/freetype-2.6.tar.bz2"
-  mirror "http://download.savannah.gnu.org/releases/freetype/freetype-2.6.tar.bz2"
-  sha256 "8469fb8124764f85029cc8247c31e132a2c5e51084ddce2a44ea32ee4ae8347e"
-  revision 1
+  url "https://downloads.sf.net/project/freetype/freetype2/2.6.2/freetype-2.6.2.tar.bz2"
+  mirror "http://download.savannah.gnu.org/releases/freetype/freetype-2.6.2.tar.bz2"
+  sha256 "baf6bdef7cdcc12ac270583f76ef245efe936267dbecef835f02a3409fcbb892"
+
+  # Note: when bumping freetype's version, you must also bump revisions of formula with
+  # "full path" references to freetype in their pkgconfig.
+  # See https://github.com/Homebrew/homebrew/pull/44587
 
   bottle do
     cellar :any
@@ -29,7 +32,7 @@ class Freetype < Formula
 
   def install
     if build.with? "subpixel"
-      inreplace "include/config/ftoption.h",
+      inreplace "include/freetype/config/ftoption.h",
           "/* #define FT_CONFIG_OPTION_SUBPIXEL_RENDERING */",
           "#define FT_CONFIG_OPTION_SUBPIXEL_RENDERING"
     end
